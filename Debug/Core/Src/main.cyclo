@@ -1,4 +1,4 @@
 ../Core/Src/main.c:52:6:void SystemClock_Config()	8
 ../Core/Src/main.c:27:5:int main()	8
-../Core/Src/main.c:273:6:void MX_TIM6_Init()	2
-../Core/Src/main.c:323:6:void Error_Handler()	1
+../Core/Src/main.c:280:6:void MX_TIM6_Init()	2
+../Core/Src/main.c:330:6:void Error_Handler()	1

@@ -1,10 +1,11 @@
-../Core/Src/display.cpp:13:6:void Display::reset()	1
-../Core/Src/display.cpp:20:6:void Display::clear()	2
-../Core/Src/display.cpp:28:6:void Display::init()	1
-../Core/Src/display.cpp:50:6:void Display::writeCommand(uint8_t)	1
-../Core/Src/display.cpp:58:6:void Display::writeData(uint8_t*, uint16_t)	1
-../Core/Src/display.cpp:66:6:void Display::setCursor(uint8_t, uint8_t)	1
-../Core/Src/display.cpp:77:5:int Display::getFontIndex(char)	1
-../Core/Src/display.cpp:83:6:void Display::drawChar(char, uint8_t, uint8_t)	2
-../Core/Src/display.cpp:94:6:void Display::drawString(const char*, uint8_t, uint8_t)	6
-../Core/Src/display.cpp:102:6:void Display::drawBitmap(const uint8_t*, uint8_t, uint8_t, uint8_t, uint8_t)	3
+../Core/Src/display.cpp:13:6:void Display::writeCommand(uint8_t)	1
+../Core/Src/display.cpp:20:6:void Display::reset()	1
+../Core/Src/display.cpp:27:6:void Display::clear()	2
+../Core/Src/display.cpp:35:6:void Display::init()	1
+../Core/Src/display.cpp:57:6:void Display::setContrast(uint8_t)	1
+../Core/Src/display.cpp:65:6:void Display::writeData(uint8_t*, uint16_t)	1
+../Core/Src/display.cpp:72:6:void Display::setCursor(uint8_t, uint8_t)	1
+../Core/Src/display.cpp:82:5:int Display::getFontIndex(char)	1
+../Core/Src/display.cpp:88:6:void Display::drawChar(char, uint8_t, uint8_t)	2
+../Core/Src/display.cpp:99:6:void Display::drawString(const char*, uint8_t, uint8_t)	6
+../Core/Src/display.cpp:107:6:void Display::drawBitmap(const uint8_t*, uint8_t, uint8_t, uint8_t, uint8_t)	3

@@ -13,9 +13,13 @@ extern "C" {
 #include "mainApp.hpp"
 
 extern SPI_HandleTypeDef hspi1;
+
 extern ADC_HandleTypeDef hadc1;
 extern DAC_HandleTypeDef hdac1;
+
 extern DMA_HandleTypeDef hdma_adc1;
+extern DMA_HandleTypeDef hdma_dac;
+
 
 void Error_Handler(void);
 

@@ -10,13 +10,15 @@ static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 static void MPU_Config(void);
 
+
+/* SPI handler for display  */
 SPI_HandleTypeDef hspi1;
 
-/* Initialize ADC */
+/* Initialize ADC handler */
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
-/* Initialize DAC */
+/* Initialize DAC handler */
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1;
 

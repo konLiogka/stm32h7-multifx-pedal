@@ -10,6 +10,13 @@
 
 namespace Display {
 
+void writeCommand(uint8_t cmd) {
+    HAL_GPIO_WritePin(OLED_DC_Port, OLED_DC_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_RESET);
+    HAL_SPI_Transmit(&hspi1, &cmd, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_SET);
+}
+
 void reset() {
     HAL_GPIO_WritePin(OLED_RST_Port, OLED_RST_Pin, GPIO_PIN_RESET);
     HAL_Delay(10);
@@ -28,31 +35,29 @@ void clear(void) {
 void init() {
     reset();
 
-    writeCommand(0xAE); // Display OFF
+    writeCommand(0xAE); 					// Display OFF
     writeCommand(0xD5); writeCommand(0x80); // Clock div
     writeCommand(0xA8); writeCommand(0x3F); // Mux ratio 64
     writeCommand(0xD3); writeCommand(0x00); // Offset
-    writeCommand(0x40); // Start line 0
+    writeCommand(0x40); 					// Start line 0
     writeCommand(0x8D); writeCommand(0x14); // Charge pump ON
     writeCommand(0x20); writeCommand(0x00); // Horizontal addressing mode
-    writeCommand(0xA1); // Segment remap
-    writeCommand(0xC8); // COM scan direction remapped
+    writeCommand(0xA1); 					// Segment remap
+    writeCommand(0xC8); 					// COM scan direction remapped
     writeCommand(0xDA); writeCommand(0x12); // COM pins
-    writeCommand(0x81); writeCommand(0xCF); // Contrast
+    writeCommand(0x81); writeCommand(0x01); // Contrast
     writeCommand(0xD9); writeCommand(0xF1); // Precharge
     writeCommand(0xDB); writeCommand(0x40); // VCOM deselect level
-    writeCommand(0xA4); // Resume RAM content display
-    writeCommand(0xA6); // Normal display
-    writeCommand(0x2E); // Deactivate scroll
-    writeCommand(0xAF); // Display ON
+    writeCommand(0xA4); 					// Resume RAM content display
+    writeCommand(0xA6); 					// Normal display
+    writeCommand(0x2E); 					// Deactivate scroll
+    writeCommand(0xAF); 					// Display ON
 }
 
-void writeCommand(uint8_t cmd) {
-    HAL_GPIO_WritePin(OLED_DC_Port, OLED_DC_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_SET);
-    HAL_Delay(1);
+void setContrast(uint8_t level)
+{
+	writeCommand(0x81);
+	writeCommand(level);
 }
 
 void writeData(uint8_t* data, uint16_t size) {
@@ -60,7 +65,6 @@ void writeData(uint8_t* data, uint16_t size) {
     HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_RESET);
     HAL_SPI_Transmit(&hspi1, data, size, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_SET);
-    HAL_Delay(1);
 }
 
 void setCursor(uint8_t column, uint8_t page) {
@@ -70,7 +74,6 @@ void setCursor(uint8_t column, uint8_t page) {
     writeCommand(0x22); // Set page address
     writeCommand(page);
     writeCommand(7);
-    HAL_Delay(1);
 }
 
 

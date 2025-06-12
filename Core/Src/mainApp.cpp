@@ -18,14 +18,19 @@ void mainApp(void)
 
 	/* Initialize the display */
     Display::init();
+    Display::setContrast(0x01);
     Display::clear();
 
     while(1)
     {
     	Display::drawBitmap(bitmap1, 128, 64, 0, 0);
+    	Display::setContrast(0x01);
     	HAL_Delay(1000);
     	Display::drawBitmap(bitmap2, 128, 64, 0, 0);
+    	Display::setContrast(0x01);
     	HAL_Delay(2000);
+
+
     }
 
 }
