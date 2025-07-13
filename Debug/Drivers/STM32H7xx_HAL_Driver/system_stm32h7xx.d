@@ -22,7 +22,7 @@ Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.o: \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_exti.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_cortex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_adc.h \
- /home/kliogka/Programming/STM32CubeIDE/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h \
+ /home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_adc_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dac.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dac_ex.h \
@@ -33,6 +33,9 @@ Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.o: \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_i2c_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_qspi.h \
+ /home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_delayblock.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h:
@@ -57,7 +60,7 @@ Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.o: \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_exti.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_cortex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_adc.h:
-/home/kliogka/Programming/STM32CubeIDE/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:
+/home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_adc_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dac.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dac_ex.h:
@@ -68,5 +71,8 @@ Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.o: \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_i2c_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_qspi.h:
+/home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_delayblock.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h:

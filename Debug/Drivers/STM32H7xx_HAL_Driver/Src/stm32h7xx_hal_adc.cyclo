@@ -1,6 +1,6 @@
-/home/kliogka/Programming/STM32CubeIDE/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:5774:22:void LL_ADC_SetAnalogWDMonitChannels(ADC_TypeDef*, uint32_t, uint32_t)	1
-/home/kliogka/Programming/STM32CubeIDE/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:6941:26:uint32_t LL_ADC_IsEnabled(const ADC_TypeDef*)	1
-/home/kliogka/Programming/STM32CubeIDE/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:7073:26:uint32_t LL_ADC_REG_IsConversionOngoing(const ADC_TypeDef*)	1
+/home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:5774:22:void LL_ADC_SetAnalogWDMonitChannels(ADC_TypeDef*, uint32_t, uint32_t)	1
+/home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:6941:26:uint32_t LL_ADC_IsEnabled(const ADC_TypeDef*)	1
+/home/konlio/STM32CubeIDE/workspace_1/oled_test/Drivers/STM32H7xx_LL_Driver/Inc/stm32h7xx_ll_adc.h:7073:26:uint32_t LL_ADC_REG_IsConversionOngoing(const ADC_TypeDef*)	1
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c:1095:13:void HAL_ADC_MspInit(ADC_HandleTypeDef*)	1
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c:1112:13:void HAL_ADC_MspDeInit(ADC_HandleTypeDef*)	1
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c:1572:19:HAL_StatusTypeDef HAL_ADC_PollForConversion(ADC_HandleTypeDef*, uint32_t)	20
