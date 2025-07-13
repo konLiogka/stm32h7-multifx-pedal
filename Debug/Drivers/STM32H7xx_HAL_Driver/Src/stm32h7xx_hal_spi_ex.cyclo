@@ -1,3 +1,0 @@
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c:74:19:HAL_StatusTypeDef HAL_SPIEx_FlushRxFifo(const SPI_HandleTypeDef*)	7
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c:113:19:HAL_StatusTypeDef HAL_SPIEx_EnableLockConfiguration(SPI_HandleTypeDef*)	4
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c:161:19:HAL_StatusTypeDef HAL_SPIEx_ConfigureUnderrun(SPI_HandleTypeDef*, uint32_t, uint32_t)	5

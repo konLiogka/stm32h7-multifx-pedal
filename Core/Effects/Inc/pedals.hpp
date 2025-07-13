@@ -1,10 +1,9 @@
-// Pedal.hpp
-#ifndef EFFECTS_PEDAL_HPP_
-#define EFFECTS_PEDAL_HPP_b
-
 #include "bitmaps.hpp"
 
 #pragma once 
+#ifndef PEDAL_HPP_
+#define PEDAL_HPP_
+
 enum class PedalType {
 	OVERDRIVE_DISTORTION,
     ECHO,
@@ -32,4 +31,4 @@ private:
 
 
 
-#endif // EFFECTS_PEDAL_HPP_
+#endif // PEDAL_HPP_

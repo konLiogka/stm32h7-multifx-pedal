@@ -1,12 +1,4 @@
 /*
- * display.hpp
- *
- *  Created on: May 30, 2025
- *      Author: kliogka
- */
-
-
-/*
 
 For SSD1309 OLED 128x64 display
 

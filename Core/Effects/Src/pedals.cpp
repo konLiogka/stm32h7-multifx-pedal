@@ -1,5 +1,4 @@
-#include "PedalType.hpp"
-
+#include <pedals.hpp>
 
 const Bitmap& Pedal::getBitmapForType(PedalType type) {
     switch (type) {
@@ -9,8 +8,6 @@ const Bitmap& Pedal::getBitmapForType(PedalType type) {
             return echo_bitmap;
         case PedalType::REVERB:
             return reverb_bitmap;
-        case PedalType::PASS_THROUGH:
-            return pass_through_bitmap;
         default:
             return pass_through_bitmap; 
     }

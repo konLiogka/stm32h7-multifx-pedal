@@ -9,14 +9,6 @@
 #include "qspi_flash.hpp"
 #include <cstdio>
 
-// Helper function to save effects chain
-bool saveCurrentEffectsChain(const EffectsChain* chain) {
-    if (!chain) {
-        return false;
-    }
-    
-    return QSPIFlash::saveEffectsChain(chain) == QSPIFlash::OK;
-}
 
 #define BUFFER_SIZE 1024
 uint16_t adc_buf[BUFFER_SIZE];
@@ -33,7 +25,7 @@ void mainApp(void)
     Display::clear();
     Display::drawBitmap(base_chain_bitmap, 0, 0);
     
-    if(QSPIFlash::init() != QSPIFlash::OK)
+    if(QSPIFlash::init() != HAL_OK)
     {
         Error_Handler();
     }
@@ -46,12 +38,12 @@ void mainApp(void)
     chain.draw();
     HAL_Delay(1000);    
 
-    if (QSPIFlash::saveEffectsChain(&chain) != QSPIFlash::OK) {
+    if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK) {
         Error_Handler();
     }
     
     EffectsChain loadedChain;
-    if (QSPIFlash::loadEffectsChain(&loadedChain) != QSPIFlash::OK) {
+    if (QSPIFlash::loadEffectsChain(&loadedChain) != HAL_OK) {
         Error_Handler();
     }
     

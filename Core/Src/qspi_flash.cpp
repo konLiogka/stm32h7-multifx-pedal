@@ -1,6 +1,4 @@
 #include "qspi_flash.hpp"
-#include "effectsChain.hpp"
-#include "PedalType.hpp"
 
 // W25Q64JV Commands
 #define W25Q64_WRITE_ENABLE          0x06
@@ -17,12 +15,9 @@
 #define W25Q64_STATUS_BUSY           0x01
 #define W25Q64_STATUS_WEL            0x02
 
-// Global QSPI handle
-extern QSPI_HandleTypeDef hqspi;
-
 namespace QSPIFlash {
 
-    static Status wait_for_ready(uint32_t timeout = 5000) {
+    static HAL_StatusTypeDef wait_for_ready(uint32_t timeout = 5000) {
         uint32_t start_time = HAL_GetTick();
         QSPI_CommandTypeDef cmd = {0};
         uint8_t status;
@@ -40,20 +35,24 @@ namespace QSPIFlash {
         
         while (HAL_GetTick() - start_time < timeout) {
             if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-                return ERROR;
+                return HAL_ERROR;
             }
             if (HAL_QSPI_Receive(&hqspi, &status, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-                return ERROR;
+                return HAL_ERROR;
             }
             if (!(status & W25Q64_STATUS_BUSY)) {
-                return OK;
+                return HAL_OK;
             }
             HAL_Delay(1);
         }
-        return TIMEOUT;
+        return HAL_TIMEOUT;
+    }
+
+    bool is_ready() {
+        return wait_for_ready(0) == HAL_OK;
     }
     
-    static Status write_enable() {
+    static HAL_StatusTypeDef write_enable() {
         QSPI_CommandTypeDef cmd = {0};
         
         cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
@@ -67,12 +66,12 @@ namespace QSPIFlash {
         cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
-        return OK;
+        return HAL_OK;
     }
 
-    Status init() {
+    HAL_StatusTypeDef init() {
         // Configure QSPI
         hqspi.Instance = QUADSPI;
         hqspi.Init.ClockPrescaler = 2;
@@ -87,7 +86,7 @@ namespace QSPIFlash {
         __HAL_RCC_QSPI_CLK_ENABLE();
         
         if (HAL_QSPI_Init(&hqspi) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
         
         // Verify chip ID
@@ -106,21 +105,21 @@ namespace QSPIFlash {
         cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
         if (HAL_QSPI_Receive(&hqspi, id, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
         
         // Check W25Q64 ID: 0xEF4017
         if (id[0] != 0xEF || id[1] != 0x40 || id[2] != 0x17) {
-            return ERROR;
+            return HAL_ERROR;
         }
-        
-        return OK;
+
+        return HAL_OK;
     }
 
-    Status read(uint32_t address, uint8_t* data, uint32_t size) {
+    HAL_StatusTypeDef read(uint32_t address, uint8_t* data, uint32_t size) {
         QSPI_CommandTypeDef cmd = {0};
         
         cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
@@ -137,23 +136,23 @@ namespace QSPIFlash {
         cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
         if (HAL_QSPI_Receive(&hqspi, data, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
-        
-        return OK;
+
+        return HAL_OK;
     }
 
-    Status write(uint32_t address, const uint8_t* data, uint32_t size) {
+    HAL_StatusTypeDef write(uint32_t address, const uint8_t* data, uint32_t size) {
         uint32_t current_addr = address;
         uint32_t remaining = size;
         const uint8_t* current_data = data;
         
         while (remaining > 0) {
-            if (write_enable() != OK) {
-                return ERROR;
+            if (write_enable() != HAL_OK) {
+                return HAL_ERROR;
             }
             
             // Calculate page boundary
@@ -176,27 +175,26 @@ namespace QSPIFlash {
             cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
             
             if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-                return ERROR;
+                return HAL_ERROR;
             }
             if (HAL_QSPI_Transmit(&hqspi, (uint8_t*)current_data, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-                return ERROR;
+                return HAL_ERROR;
             }
             
-            if (wait_for_ready() != OK) {
-                return TIMEOUT;
+            if (wait_for_ready() != HAL_OK) {
+                return HAL_TIMEOUT;
             }
             
             current_addr += write_size;
             current_data += write_size;
             remaining -= write_size;
         }
-        
-        return OK;
+        return HAL_OK;
     }
 
-    Status erase_sector(uint32_t address) {
-        if (write_enable() != OK) {
-            return ERROR;
+    HAL_StatusTypeDef erase_sector(uint32_t address) {
+        if (write_enable() != HAL_OK) {
+            return HAL_ERROR;
         }
         
         QSPI_CommandTypeDef cmd = {0};
@@ -213,15 +211,15 @@ namespace QSPIFlash {
         cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
         
         return wait_for_ready();
     }
 
-    Status erase_chip() {
-        if (write_enable() != OK) {
-            return ERROR;
+    HAL_StatusTypeDef erase_chip() {
+        if (write_enable() != HAL_OK) {
+            return HAL_ERROR;
         }
         
         QSPI_CommandTypeDef cmd = {0};
@@ -236,50 +234,40 @@ namespace QSPIFlash {
         cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            return ERROR;
+            return HAL_ERROR;
         }
         
         return wait_for_ready(120000);  
     }
 
-    bool is_ready() {
-        return wait_for_ready(0) == OK;
-    }
-
-    Status loadEffectsChain(EffectsChain* chain) {
+    HAL_StatusTypeDef loadEffectsChain(EffectsChain* chain) {
         if (!chain) {
-            return ERROR;
+            return HAL_ERROR;
         }
         
-        // Read the pedal types from flash
-        uint8_t pedalData[4];  // 4 pedals, 1 byte each for PedalType
-        Status status = read(CHAIN_STORAGE_ADDR, pedalData, sizeof(pedalData));
-        
-        if (status != OK) {
-            return status;
+        uint8_t pedalData[4];  
+
+        if (read(CHAIN_STORAGE_ADDR, pedalData, sizeof(pedalData)) != HAL_OK) {
+            return HAL_ERROR;
         }
         
-        // Set each pedal in the chain
         for (int i = 0; i < 4; i++) {
             PedalType type = static_cast<PedalType>(pedalData[i]);
             chain->setPedal(i, type);
         }
-        
-        return OK;
+
+        return HAL_OK;
     }
 
-    Status saveEffectsChain(const EffectsChain* chain) {
+    HAL_StatusTypeDef saveEffectsChain(const EffectsChain* chain) {
         if (!chain) {
-            return ERROR;
+            return HAL_ERROR;
         }
         
-        // Erase the sector first
-        Status status = erase_sector(CHAIN_STORAGE_ADDR);
-        if (status != OK) {
-            return status;
+        if (erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK) {
+            return HAL_ERROR;
         }
         
-        // Prepare data to write
         uint8_t pedalData[4];
         for (int i = 0; i < 4; i++) {
             Pedal* pedal = chain->getPedal(i);
@@ -290,8 +278,7 @@ namespace QSPIFlash {
             }
         }
         
-        // Write to flash
         return write(CHAIN_STORAGE_ADDR, pedalData, sizeof(pedalData));
     }
 
-} // namespace QSPIFlash
+} 

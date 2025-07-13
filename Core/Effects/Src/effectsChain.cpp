@@ -1,4 +1,5 @@
 #include "effectsChain.hpp"
+#include "display.hpp"
 
 EffectsChain::EffectsChain() {
     pedals[0] = new Pedal(PedalType::PASS_THROUGH);
@@ -16,7 +17,7 @@ EffectsChain::~EffectsChain() {
 void EffectsChain::setPedal(int index, PedalType type) {
     if (index < 0 || index >= 4) return;
 
-    delete pedals[index]; // Free previous pedal
+    delete pedals[index]; 
     pedals[index] = new Pedal(type);
 }
 

@@ -14,6 +14,7 @@ static void MPU_Config(void);
 /* SPI handler for display  */
 SPI_HandleTypeDef hspi1;
 
+/* QSPI handler for Winbond Q25W64JV */
 QSPI_HandleTypeDef hqspi;
 
 /* Initialize ADC handler */
@@ -53,7 +54,7 @@ int main(void) {
 
 
 /**
-  * @brief System Clock Configuration - Simplified for stability
+  * @brief System Clock Configuration  
   * @retval None
   */
 void SystemClock_Config(void)
@@ -67,7 +68,7 @@ void SystemClock_Config(void)
     while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
     // Configure the main PLL (PLL1)
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE; // Using HSE for better accuracy
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE; 
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -106,29 +107,34 @@ void SystemClock_Config(void)
     SCB_EnableICache();
     SCB_EnableDCache();
 }
-// SPI Initialization with slower speed
+
+/**
+  * @brief SPI Initialization Function for display SSD1309
+  * @param None
+  * @retval None
+  */
 void MX_SPI1_Init(void)
 {
-    hspi1.Instance 						= SPI1;
-    hspi1.Init.Mode 					= SPI_MODE_MASTER;
-    hspi1.Init.Direction 				= SPI_DIRECTION_2LINES_TXONLY;
-    hspi1.Init.DataSize 				= SPI_DATASIZE_8BIT;
-    hspi1.Init.CLKPolarity 				= SPI_POLARITY_LOW;    // CPOL = 0
-    hspi1.Init.CLKPhase 				= SPI_PHASE_1EDGE;     // CPHA = 0
-    hspi1.Init.NSS 						= SPI_NSS_SOFT;
-    hspi1.Init.BaudRatePrescaler 		= SPI_BAUDRATEPRESCALER_32;
-    hspi1.Init.FirstBit 				= SPI_FIRSTBIT_MSB;
-    hspi1.Init.TIMode 					= SPI_TIMODE_DISABLE;
-    hspi1.Init.CRCCalculation 			= SPI_CRCCALCULATION_DISABLE;
-    hspi1.Init.CRCPolynomial 			= 7;
-    hspi1.Init.NSSPMode 				= SPI_NSS_PULSE_DISABLE;
-    hspi1.Init.NSSPolarity 				= SPI_NSS_POLARITY_LOW;
-    hspi1.Init.FifoThreshold			= SPI_FIFO_THRESHOLD_01DATA;
-    hspi1.Init.MasterSSIdleness 		= SPI_MASTER_SS_IDLENESS_00CYCLE;
+    hspi1.Instance 						          = SPI1;
+    hspi1.Init.Mode 				    	      = SPI_MODE_MASTER;
+    hspi1.Init.Direction 		  		      = SPI_DIRECTION_2LINES_TXONLY;
+    hspi1.Init.DataSize 			  	      = SPI_DATASIZE_8BIT;
+    hspi1.Init.CLKPolarity 				      = SPI_POLARITY_LOW;    // CPOL = 0
+    hspi1.Init.CLKPhase 		 			      = SPI_PHASE_1EDGE;     // CPHA = 0
+    hspi1.Init.NSS 						          = SPI_NSS_SOFT;
+    hspi1.Init.BaudRatePrescaler 		    = SPI_BAUDRATEPRESCALER_32;
+    hspi1.Init.FirstBit 				        = SPI_FIRSTBIT_MSB;
+    hspi1.Init.TIMode 					        = SPI_TIMODE_DISABLE;
+    hspi1.Init.CRCCalculation 			    = SPI_CRCCALCULATION_DISABLE;
+    hspi1.Init.CRCPolynomial 			      = 7;
+    hspi1.Init.NSSPMode 				        = SPI_NSS_PULSE_DISABLE;
+    hspi1.Init.NSSPolarity 				      = SPI_NSS_POLARITY_LOW;
+    hspi1.Init.FifoThreshold			      = SPI_FIFO_THRESHOLD_01DATA;
+    hspi1.Init.MasterSSIdleness 	    	= SPI_MASTER_SS_IDLENESS_00CYCLE;
     hspi1.Init.MasterInterDataIdleness 	= SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-    hspi1.Init.MasterReceiverAutoSusp	= SPI_MASTER_RX_AUTOSUSP_DISABLE;
-    hspi1.Init.MasterKeepIOState 		= SPI_MASTER_KEEP_IO_STATE_DISABLE;
-    hspi1.Init.IOSwap 					= SPI_IO_SWAP_DISABLE;
+    hspi1.Init.MasterReceiverAutoSusp	  = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+    hspi1.Init.MasterKeepIOState 	    	= SPI_MASTER_KEEP_IO_STATE_DISABLE;
+    hspi1.Init.IOSwap 					        = SPI_IO_SWAP_DISABLE;
 
     if (HAL_SPI_Init(&hspi1) != HAL_OK)
     {
@@ -145,19 +151,17 @@ void MX_QSPI_Init(void)
 {
     // Configure QSPI peripheral for W25Q64JV
     hqspi.Instance = QUADSPI;
-    hqspi.Init.ClockPrescaler = 2;                        // QSPI clock = AHB clock / (prescaler + 1)
-    hqspi.Init.FifoThreshold = 4;                         // FIFO threshold
+    hqspi.Init.ClockPrescaler = 2;                              // QSPI clock = AHB clock / (prescaler + 1)
+    hqspi.Init.FifoThreshold = 4;                               // FIFO threshold
     hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE; // Sample shifting for timing
-    hqspi.Init.FlashSize = 22;                            // 2^(22+1) = 8MB for W25Q64JV
-    hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE; // Chip select high time
-    hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;             // Clock mode 0 (CPOL=0, CPHA=0)
-    hqspi.Init.FlashID = QSPI_FLASH_ID_1;                 // Flash ID 1 (single flash)
-    hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;        // Single flash mode
+    hqspi.Init.FlashSize = 22;                                  // 2^(22+1) = 8MB for W25Q64JV
+    hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;  // Chip select high time
+    hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;                   // Clock mode 0 (CPOL=0, CPHA=0)
+    hqspi.Init.FlashID = QSPI_FLASH_ID_1;                       // Flash ID 1 (single flash)
+    hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;              // Single flash mode
     
-    // Enable QSPI clock
     __HAL_RCC_QSPI_CLK_ENABLE();
     
-    // Initialize QSPI
     if (HAL_QSPI_Init(&hqspi) != HAL_OK) {
         Error_Handler();
     }

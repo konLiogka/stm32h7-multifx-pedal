@@ -1,2 +1,0 @@
-../Core/Src/mainApp.cpp:13:6:bool saveCurrentEffectsChain(const EffectsChain*)	2
-../Core/Src/mainApp.cpp:27:6:void mainApp()	4

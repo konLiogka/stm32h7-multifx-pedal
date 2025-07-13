@@ -1,10 +1,3 @@
-/*
- * mainApp.hpp
- *
- *  Created on: May 30, 2025
- *      Author: kliogka
- */
-
 #include "display.hpp"
 #include "bitmaps.hpp"
 #include "effectsChain.hpp"

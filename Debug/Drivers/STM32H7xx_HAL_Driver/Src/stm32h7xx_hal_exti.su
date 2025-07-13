@@ -1,9 +1,0 @@
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:170:19:HAL_StatusTypeDef HAL_EXTI_SetConfigLine(EXTI_HandleTypeDef*, EXTI_ConfigTypeDef*)	20	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:374:19:HAL_StatusTypeDef HAL_EXTI_GetConfigLine(EXTI_HandleTypeDef*, EXTI_ConfigTypeDef*)	16	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:512:19:HAL_StatusTypeDef HAL_EXTI_ClearConfigLine(const EXTI_HandleTypeDef*)	20	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:612:19:HAL_StatusTypeDef HAL_EXTI_RegisterCallback(EXTI_HandleTypeDef*, EXTI_CallbackIDTypeDef, void (*)())	0	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:644:19:HAL_StatusTypeDef HAL_EXTI_GetHandle(EXTI_HandleTypeDef*, uint32_t)	0	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:685:6:void HAL_EXTI_IRQHandler(const EXTI_HandleTypeDef*)	0	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:737:10:uint32_t HAL_EXTI_GetPending(const EXTI_HandleTypeDef*, uint32_t)	0	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:788:6:void HAL_EXTI_ClearPending(const EXTI_HandleTypeDef*, uint32_t)	0	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c:830:6:void HAL_EXTI_GenerateSWI(const EXTI_HandleTypeDef*)	0	static

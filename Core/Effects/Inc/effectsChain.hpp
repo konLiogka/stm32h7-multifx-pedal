@@ -1,14 +1,10 @@
-#include <array>
-#include <memory>
-#include <cstring>
-#include "PedalType.hpp"
+#include <pedals.hpp>
 #include "display.hpp"
 
-#ifndef EFFECTS_EFFECTSCHAIN_HPP_
-#define EFFECTS_EFFECTSCHAIN_HPP_
-
-
 #pragma once
+#ifndef EFFECTSCHAIN_HPP_
+#define EFFECTSCHAIN_HPP_
+
 class EffectsChain {
 public:
     EffectsChain();

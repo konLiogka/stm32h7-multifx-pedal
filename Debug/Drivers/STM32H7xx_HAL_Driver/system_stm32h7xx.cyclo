@@ -1,3 +1,0 @@
-../Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.c:180:6:void SystemInit()	4
-../Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.c:345:6:void SystemCoreClockUpdate()	9
-../Drivers/STM32H7xx_HAL_Driver/system_stm32h7xx.c:467:6:void ExitRun0Mode()	2

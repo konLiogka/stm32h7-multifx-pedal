@@ -1,14 +1,7 @@
-/*
- * bitmaps.hpp
- *
- *  Created on: May 30, 2025
- *      Author: kliogka
- */
-
-#ifndef INC_BITMAPS_HPP_
-#define INC_BITMAPS_HPP_
-
 #include <cstdint>
+
+#ifndef BITMAPS_HPP_
+#define BITMAPS_HPP_
 
 constexpr uint16_t FULL_SCREEN_WIDTH  = 128;
 constexpr uint16_t FULL_SCREEN_HEIGHT = 64;
