@@ -16,7 +16,36 @@ public:
     Pedal(PedalType t)
         : type(t), image(getBitmapForType(t)) {}
 
-    ~Pedal() {}
+    virtual ~Pedal() {}
+    
+    // Volume and tone controls
+    float volume;
+    float highs;
+    float lows;
+
+    // For distortion pedals
+    float gain;
+    float tone;
+    float level;
+
+    // For delay-based pedals
+    float delayTime;
+    float feedback;
+    float mix;
+
+    // For filter pedals
+    float cutoffFrequency;
+    float resonance;
+
+    // For modulator pedals
+    float depth;
+    float rate;
+
+    // For dynamic range control pedals
+    float threshold;
+    float ratio;
+    float attack;
+    float release;
 
     const Bitmap& getImage() const { return image; }
     PedalType getType() const { return type; }
@@ -29,6 +58,6 @@ private:
     static const Bitmap& getBitmapForType(PedalType type);
 };
 
-
+ 
 
 #endif // PEDAL_HPP_

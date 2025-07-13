@@ -104,12 +104,11 @@ void drawString(const char* str, uint8_t page, uint8_t col) {
 
 void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart) {
     uint16_t byteIndex = 0;
-    uint8_t pagesNeeded = (bmp.height + 7) / 8; // Round up for partial pages
+    uint8_t pagesNeeded = (bmp.height + 7) / 8;  
 
     for (uint8_t page = 0; page < pagesNeeded; page++) {
         setCursor(x, pageStart + page);
 
-        // Send one full row (width bytes)
         writeData((uint8_t*)&bmp.data[byteIndex], bmp.width);
         byteIndex += bmp.width;
     }

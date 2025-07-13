@@ -13,6 +13,11 @@ For Winbond Q25W64JV NOR Flash Memory (8MB)
 #define QSPI_FLASH_H
 
 #define CHAIN_STORAGE_ADDR 0x1000  
+
+constexpr int NUM_PEDALS = 4;
+constexpr int NUM_FLOATS = 16;
+constexpr int PEDAL_SIZE = 1 + sizeof(float) * NUM_FLOATS;
+
 extern QSPI_HandleTypeDef hqspi;
 
 namespace QSPIFlash 

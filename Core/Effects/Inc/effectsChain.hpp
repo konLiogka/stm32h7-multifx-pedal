@@ -14,8 +14,6 @@ public:
     Pedal* getPedal(int index) const;
     void draw() const;
 
-
-
 private:
     Pedal* pedals[4];
 };

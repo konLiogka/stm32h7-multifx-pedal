@@ -29,11 +29,32 @@ void mainApp(void)
     {
         Error_Handler();
     }
+
     EffectsChain chain;
+    
     chain.setPedal(0, PedalType::REVERB);
+    chain.getPedal(0)->volume = 0.8f;
+    chain.getPedal(0)->depth = 0.5f;
+    chain.getPedal(0)->rate = 0.2f;
+    chain.getPedal(0)->mix = 0.7f;
+
     chain.setPedal(1, PedalType::OVERDRIVE_DISTORTION);
-    chain.setPedal(2, PedalType::PASS_THROUGH);
+    chain.getPedal(1)->volume = 0.6f;
+    chain.getPedal(1)->gain = 0.9f;
+    chain.getPedal(1)->tone = 0.3f;
+    chain.getPedal(1)->level = 0.4f;
+
+    chain.setPedal(2, PedalType::ECHO);
+    chain.getPedal(2)->volume = 0.5f;
+    chain.getPedal(2)->delayTime = 0.25f;
+    chain.getPedal(2)->feedback = 0.6f;
+    chain.getPedal(2)->mix = 0.8f;
+
     chain.setPedal(3, PedalType::PASS_THROUGH);
+    chain.getPedal(3)->volume = 1.0f;
+    chain.getPedal(3)->highs = 0.1f;
+    chain.getPedal(3)->lows = 0.2f;
+    chain.getPedal(3)->level = 0.3f;
 
     chain.draw();
     HAL_Delay(1000);    
@@ -47,7 +68,6 @@ void mainApp(void)
         Error_Handler();
     }
     
-    loadedChain.setPedal(3, PedalType::OVERDRIVE_DISTORTION);
     Display::setContrast(0x02);
     while(1)
     {
