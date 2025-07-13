@@ -5,7 +5,7 @@
  *      Author: kliogka
  */
 
-#include <display.hpp>
+#include "display.hpp"
 
 
 namespace Display {
@@ -26,8 +26,8 @@ void reset() {
 
 void clear(void) {
     setCursor(0, 0);
-    for(uint16_t i = 0; i < 128 * 8; i++) {
-        uint8_t zero = 0x00;
+    uint8_t zero = 0x00;
+    for(uint16_t i = 0; i < FULL_SCREEN; i++) {
         writeData(&zero, 1);
     }
 }
@@ -45,7 +45,7 @@ void init() {
     writeCommand(0xA1); 					// Segment remap
     writeCommand(0xC8); 					// COM scan direction remapped
     writeCommand(0xDA); writeCommand(0x12); // COM pins
-    writeCommand(0x81); writeCommand(0x01); // Contrast
+    writeCommand(0x81); writeCommand(0xFF); // Contrast
     writeCommand(0xD9); writeCommand(0xF1); // Precharge
     writeCommand(0xDB); writeCommand(0x40); // VCOM deselect level
     writeCommand(0xA4); 					// Resume RAM content display
@@ -102,19 +102,16 @@ void drawString(const char* str, uint8_t page, uint8_t col) {
     }
 }
 
-void drawBitmap(const uint8_t* bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t pageStart) {
-    // SSD1309 uses PAGE addressing mode (default after init)
-    // Each byte = 8 vertical pixels (MSB at top)
-
+void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart) {
     uint16_t byteIndex = 0;
-    uint8_t pagesNeeded = (height + 7) / 8; // Round up for partial pages
+    uint8_t pagesNeeded = (bmp.height + 7) / 8; // Round up for partial pages
 
     for (uint8_t page = 0; page < pagesNeeded; page++) {
         setCursor(x, pageStart + page);
 
         // Send one full row (width bytes)
-        writeData((uint8_t*)&bitmap[byteIndex], width);
-        byteIndex += width;
+        writeData((uint8_t*)&bmp.data[byteIndex], bmp.width);
+        byteIndex += bmp.width;
     }
 }
 

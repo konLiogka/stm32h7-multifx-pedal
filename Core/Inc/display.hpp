@@ -14,6 +14,7 @@ For SSD1309 OLED 128x64 display
 
 #include <main.h>
 #include <cstdint>
+#include "bitmaps.hpp"
 
 #ifndef INC_DISPLAY_HPP_
 #define INC_DISPLAY_HPP_
@@ -36,7 +37,7 @@ namespace Display {
     void setCursor(uint8_t column, uint8_t page);
     void drawChar(uint8_t c, uint8_t page, uint8_t col);
     void drawString(const char* str, uint8_t page, uint8_t col);
-    void drawBitmap(const uint8_t* bitmap, uint8_t page, uint8_t col, uint8_t width, uint8_t heightPages);
+    void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart);
     void clear(void);
 }
 

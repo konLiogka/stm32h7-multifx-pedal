@@ -2,17 +2,19 @@
 
 
 void SystemClock_Config(void);
-
-static void MX_GPIO_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_DMA_Init(void);
-static void MX_ADC1_Init(void);
-static void MX_DAC1_Init(void);
+void MX_GPIO_Init(void);
+void MX_SPI1_Init(void);
+void MX_QSPI_Init(void);
+void MX_DMA_Init(void);
+void MX_ADC1_Init(void);
+void MX_DAC1_Init(void);
 static void MPU_Config(void);
 
 
 /* SPI handler for display  */
 SPI_HandleTypeDef hspi1;
+
+QSPI_HandleTypeDef hqspi;
 
 /* Initialize ADC handler */
 ADC_HandleTypeDef hadc1;
@@ -25,7 +27,6 @@ DMA_HandleTypeDef hdma_dac1;
 /* Synchronization timer for ADC/DAC */
 TIM_HandleTypeDef htim6;
 
-
 int main(void) {
 
 	/* Initialize main peripherals */
@@ -33,7 +34,11 @@ int main(void) {
     SystemClock_Config();
 
     MX_GPIO_Init();
+
     MX_SPI1_Init();
+    MX_QSPI_Init();
+ 
+
     MX_ADC1_Init();
     MX_DAC1_Init();
     MX_DMA_Init();
@@ -102,7 +107,7 @@ void SystemClock_Config(void)
     SCB_EnableDCache();
 }
 // SPI Initialization with slower speed
-static void MX_SPI1_Init(void)
+void MX_SPI1_Init(void)
 {
     hspi1.Instance 						= SPI1;
     hspi1.Init.Mode 					= SPI_MODE_MASTER;
@@ -132,17 +137,50 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief QSPI Initialization Function for W25Q64JV (8MB NOR Flash)
+  * @param None
+  * @retval None
+  */
+void MX_QSPI_Init(void)
+{
+    // Configure QSPI peripheral for W25Q64JV
+    hqspi.Instance = QUADSPI;
+    hqspi.Init.ClockPrescaler = 2;                        // QSPI clock = AHB clock / (prescaler + 1)
+    hqspi.Init.FifoThreshold = 4;                         // FIFO threshold
+    hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE; // Sample shifting for timing
+    hqspi.Init.FlashSize = 22;                            // 2^(22+1) = 8MB for W25Q64JV
+    hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE; // Chip select high time
+    hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;             // Clock mode 0 (CPOL=0, CPHA=0)
+    hqspi.Init.FlashID = QSPI_FLASH_ID_1;                 // Flash ID 1 (single flash)
+    hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;        // Single flash mode
+    
+    // Enable QSPI clock
+    __HAL_RCC_QSPI_CLK_ENABLE();
+    
+    // Initialize QSPI
+    if (HAL_QSPI_Init(&hqspi) != HAL_OK) {
+        Error_Handler();
+    }
+}
+ 
+ 
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
   */
-static void MX_GPIO_Init(void)
+void MX_GPIO_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     // Enable GPIO clocks
-    __HAL_RCC_GPIOD_CLK_ENABLE();
+
     __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+
 
     // Configure SPI1 pins (PA5=SCK, PA7=MOSI) with strong drive
     GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_7;
@@ -163,6 +201,42 @@ static void MX_GPIO_Init(void)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);   // CS high (inactive)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);   // RES high (not reset)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_RESET); // DC low (command mode)
+
+    // Configure PD1 as input with pull-up
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+        // CLK (PB2) - Alternate Function 9 (QUADSPI_CLK)
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // NCS (PB6) - Alternate Function 10 (QUADSPI_BK1_NCS)
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // IO0 (PD11) - Alternate Function 9 (QUADSPI_BK1_IO0)
+    GPIO_InitStruct.Pin = GPIO_PIN_11;
+    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+    // IO1 (PD12) - Alternate Function 9 (QUADSPI_BK1_IO1)
+    GPIO_InitStruct.Pin = GPIO_PIN_12;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+    // IO2 (PE2) - Alternate Function 9 (QUADSPI_BK1_IO2)
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+    // IO3 (PD13) - Alternate Function 9 (QUADSPI_BK1_IO3)
+    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 }
 
 /**
@@ -299,7 +373,7 @@ void MX_TIM6_Init(void) {
 }
 
 
-void MPU_Config(void)
+static void MPU_Config(void)
 {
     MPU_Region_InitTypeDef MPU_InitStruct = {0};
 
