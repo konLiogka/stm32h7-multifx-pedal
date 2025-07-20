@@ -13,3 +13,15 @@ const Bitmap& Pedal::getBitmapForType(PedalType type) {
     }
 }
 
+ const char* Pedal::getNameForType(PedalType type) {
+    switch (type) {
+        case PedalType::OVERDRIVE_DISTORTION:
+            return "Overdrive Distortion";
+        case PedalType::ECHO:
+            return "Echo";
+        case PedalType::REVERB:
+            return "Reverb";
+        default:
+            return "Pass Through"; 
+    }
+ }

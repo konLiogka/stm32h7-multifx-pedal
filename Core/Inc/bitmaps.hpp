@@ -33,6 +33,9 @@ extern const uint8_t font_5x7[][5];
 extern const uint8_t base_chain[FULL_SCREEN];
 extern const Bitmap  base_chain_bitmap;
 
+extern const uint8_t edit_pedal[FULL_SCREEN];
+extern const Bitmap  edit_pedal_bitmap;
+
 extern const uint8_t overdrive_distortion_data[PEDAL_SIZE];
 extern const Bitmap  overdrive_distortion_bitmap;
 

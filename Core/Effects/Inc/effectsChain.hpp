@@ -9,6 +9,8 @@ class EffectsChain {
 public:
     EffectsChain();
     ~EffectsChain();
+
+    uint8_t selectedPedal;
     
     void setPedal(int index, PedalType type);
     Pedal* getPedal(int index) const;

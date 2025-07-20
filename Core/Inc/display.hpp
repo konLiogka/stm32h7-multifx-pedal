@@ -27,12 +27,10 @@ namespace Display {
     void writeData(uint8_t* data, uint16_t size);
     void reset();
     void setCursor(uint8_t column, uint8_t page);
-    void drawChar(uint8_t c, uint8_t page, uint8_t col);
-    void drawString(const char* str, uint8_t page, uint8_t col);
+    void drawChar(uint8_t c, uint8_t x, uint8_t page);
+    void drawString(const char* str, uint8_t x, uint8_t page);
     void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart);
     void clear(void);
 }
-
-
 
 #endif /* INC_DISPLAY_HPP_ */

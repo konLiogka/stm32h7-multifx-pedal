@@ -83,21 +83,21 @@ int getFontIndex(char c) {
     return c - 0x20;
 }
 
-void drawChar(char c, uint8_t page, uint8_t col) {
+void drawChar(char c, uint8_t x, uint8_t page) {
     int index = getFontIndex(c);
     if (index < 0) return;
 
-    setCursor(col, page);
+    setCursor(x, page);
     writeData((uint8_t *)font_5x7[index], 5);
 
     uint8_t space = 0x00;
     writeData(&space, 1);
 }
 
-void drawString(const char* str, uint8_t page, uint8_t col) {
-    while (*str && col < 128) {
-        drawChar(*str, page, col);
-        col += 6;
+void drawString(const char* str, uint8_t x, uint8_t page) {
+    while (*str && x < 128) {
+        drawChar(*str, x, page);
+        x += 6;
         str++;
     }
 }

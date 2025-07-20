@@ -31,7 +31,7 @@ void mainApp(void)
     }
 
     EffectsChain chain;
-    
+
     chain.setPedal(0, PedalType::REVERB);
     chain.getPedal(0)->volume = 0.8f;
     chain.getPedal(0)->depth = 0.5f;
@@ -64,19 +64,22 @@ void mainApp(void)
     }
     
     EffectsChain loadedChain;
+    loadedChain.selectedPedal = 0;
+
     if (QSPIFlash::loadEffectsChain(&loadedChain) != HAL_OK) {
         Error_Handler();
     }
-    
-    Display::setContrast(0x02);
+
+
+    HAL_Delay(3000);
+    Display::drawBitmap(edit_pedal_bitmap, 0, 0);
+    Display::drawBitmap(loadedChain.getPedal(loadedChain.selectedPedal)->getImage(), 20, 11);
+    Display::drawString(loadedChain.getPedal(loadedChain.selectedPedal)->getName(), 60, 11);
+
     while(1)
     {
-        HAL_Delay(1000);
-        Display::clear();
-        HAL_Delay(1);
-        Display::drawBitmap(base_chain_bitmap, 0, 0);
-        HAL_Delay(1);
-        loadedChain.draw();
+
+ 
     }
 
 }
