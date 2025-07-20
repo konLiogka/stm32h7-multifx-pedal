@@ -4,7 +4,6 @@
 void SystemClock_Config(void);
 void MX_GPIO_Init(void);
 void MX_SPI1_Init(void);
-void MX_QSPI_Init(void);
 void MX_DMA_Init(void);
 void MX_ADC1_Init(void);
 void MX_DAC1_Init(void);
@@ -13,9 +12,6 @@ static void MPU_Config(void);
 
 /* SPI handler for display  */
 SPI_HandleTypeDef hspi1;
-
-/* QSPI handler for Winbond Q25W64JV */
-QSPI_HandleTypeDef hqspi;
 
 /* Initialize ADC handler */
 ADC_HandleTypeDef hadc1;
@@ -37,8 +33,6 @@ int main(void) {
     MX_GPIO_Init();
 
     MX_SPI1_Init();
-    MX_QSPI_Init();
- 
 
     MX_ADC1_Init();
     MX_DAC1_Init();
@@ -122,7 +116,7 @@ void MX_SPI1_Init(void)
     hspi1.Init.CLKPolarity 				      = SPI_POLARITY_LOW;    // CPOL = 0
     hspi1.Init.CLKPhase 		 			      = SPI_PHASE_1EDGE;     // CPHA = 0
     hspi1.Init.NSS 						          = SPI_NSS_SOFT;
-    hspi1.Init.BaudRatePrescaler 		    = SPI_BAUDRATEPRESCALER_32;
+    hspi1.Init.BaudRatePrescaler 		    = SPI_BAUDRATEPRESCALER_32; 
     hspi1.Init.FirstBit 				        = SPI_FIRSTBIT_MSB;
     hspi1.Init.TIMode 					        = SPI_TIMODE_DISABLE;
     hspi1.Init.CRCCalculation 			    = SPI_CRCCALCULATION_DISABLE;
@@ -138,31 +132,6 @@ void MX_SPI1_Init(void)
 
     if (HAL_SPI_Init(&hspi1) != HAL_OK)
     {
-        Error_Handler();
-    }
-}
-
-/**
-  * @brief QSPI Initialization Function for W25Q64JV (8MB NOR Flash)
-  * @param None
-  * @retval None
-  */
-void MX_QSPI_Init(void)
-{
-    // Configure QSPI peripheral for W25Q64JV
-    hqspi.Instance = QUADSPI;
-    hqspi.Init.ClockPrescaler = 2;                              // QSPI clock = AHB clock / (prescaler + 1)
-    hqspi.Init.FifoThreshold = 4;                               // FIFO threshold
-    hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE; // Sample shifting for timing
-    hqspi.Init.FlashSize = 22;                                  // 2^(22+1) = 8MB for W25Q64JV
-    hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;  // Chip select high time
-    hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;                   // Clock mode 0 (CPOL=0, CPHA=0)
-    hqspi.Init.FlashID = QSPI_FLASH_ID_1;                       // Flash ID 1 (single flash)
-    hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;              // Single flash mode
-    
-    __HAL_RCC_QSPI_CLK_ENABLE();
-    
-    if (HAL_QSPI_Init(&hqspi) != HAL_OK) {
         Error_Handler();
     }
 }

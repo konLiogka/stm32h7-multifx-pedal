@@ -15,6 +15,8 @@
 #define W25Q64_STATUS_BUSY           0x01
 #define W25Q64_STATUS_WEL            0x02
 
+QSPI_HandleTypeDef hqspi;
+
 namespace QSPIFlash {
 
     static HAL_StatusTypeDef wait_for_ready(uint32_t timeout = 5000) {
@@ -72,7 +74,6 @@ namespace QSPIFlash {
     }
 
     HAL_StatusTypeDef init() {
-        // Configure QSPI
         hqspi.Instance = QUADSPI;
         hqspi.Init.ClockPrescaler = 2;
         hqspi.Init.FifoThreshold = 4;
@@ -89,7 +90,6 @@ namespace QSPIFlash {
             return HAL_ERROR;
         }
         
-        // Verify chip ID
         QSPI_CommandTypeDef cmd = {0};
         uint8_t id[3];
         
@@ -155,7 +155,6 @@ namespace QSPIFlash {
                 return HAL_ERROR;
             }
             
-            // Calculate page boundary
             uint32_t page_offset = current_addr % W25Q64_PAGE_SIZE;
             uint32_t page_remaining = W25Q64_PAGE_SIZE - page_offset;
             uint32_t write_size = (remaining < page_remaining) ? remaining : page_remaining;
@@ -244,18 +243,14 @@ namespace QSPIFlash {
         if (!chain) {
             return HAL_ERROR;
         }
-
-        constexpr int NUM_PEDALS = 4;
-        constexpr int NUM_FLOATS = 16;
-        constexpr int PEDAL_SIZE = 1 + sizeof(float) * NUM_FLOATS;
-        uint8_t pedalData[NUM_PEDALS * PEDAL_SIZE] = {};
+        uint8_t pedalData[NUM_PEDALS * PEDAL_LEN] = {};
 
         if (read(CHAIN_STORAGE_ADDR, pedalData, sizeof(pedalData)) != HAL_OK) {
             return HAL_ERROR;
         }
 
         for (int i = 0; i < NUM_PEDALS; i++) {
-            uint8_t* p = &pedalData[i * PEDAL_SIZE];
+            uint8_t* p = &pedalData[i * PEDAL_LEN];
             PedalType type = static_cast<PedalType>(p[0]);
             chain->setPedal(i, type);
             Pedal* pedal = chain->getPedal(i);
@@ -289,11 +284,11 @@ namespace QSPIFlash {
         }
 
  
-        uint8_t pedalData[NUM_PEDALS * PEDAL_SIZE] = {};
+        uint8_t pedalData[NUM_PEDALS * PEDAL_LEN] = {};
 
         for (int i = 0; i < NUM_PEDALS; i++) {
             Pedal* pedal = chain->getPedal(i);
-            uint8_t* p = &pedalData[i * PEDAL_SIZE];
+            uint8_t* p = &pedalData[i * PEDAL_LEN];
             if (pedal) {
                 p[0] = static_cast<uint8_t>(pedal->getType());
                 float* params = reinterpret_cast<float*>(p + 1);

@@ -16,13 +16,13 @@ For Winbond Q25W64JV NOR Flash Memory (8MB)
 
 constexpr int NUM_PEDALS = 4;
 constexpr int NUM_FLOATS = 16;
-constexpr int PEDAL_SIZE = 1 + sizeof(float) * NUM_FLOATS;
+constexpr int PEDAL_LEN  = 1 + sizeof(float) * NUM_FLOATS;
 
+/* QSPI handler for Winbond Q25W64JV */
 extern QSPI_HandleTypeDef hqspi;
 
 namespace QSPIFlash 
 {
-    
     bool is_ready();
     HAL_StatusTypeDef init();
     HAL_StatusTypeDef read(uint32_t address, uint8_t* data, uint32_t size);
