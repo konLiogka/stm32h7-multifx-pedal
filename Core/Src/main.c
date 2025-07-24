@@ -1,19 +1,25 @@
-#include <main.h>
+ 
 
+#include <main.h>
+#include "display.hpp"
 
 void SystemClock_Config(void);
 void MX_GPIO_Init(void);
 void MX_SPI1_Init(void);
 void MX_DMA_Init(void);
 void MX_ADC1_Init(void);
+void MX_TIM6_Init(void);
+void MX_TIM8_Init(void);
 void MX_DAC1_Init(void);
+void MX_ADC2_Init(void);
+
 static void MPU_Config(void);
 
 
 /* SPI handler for display  */
 SPI_HandleTypeDef hspi1;
 
-/* Initialize ADC handler */
+/* Initialize ADC1 handler */
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
@@ -21,22 +27,84 @@ DMA_HandleTypeDef hdma_adc1;
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1;
 
-/* Synchronization timer for ADC/DAC */
+/* Synchronization timers for ADC/DAC */
 TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim8;
 
-int main(void) {
+/* Initialize ADC2 handler */
+ADC_HandleTypeDef hadc2;
+DMA_HandleTypeDef hdma_adc2;
+uint8_t err_code = 0;
+
+
+extern "C" void TIM8_UP_TIM13_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&htim8);
+}
+
+extern "C" void EXTI0_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+}
+
+extern "C"  void EXTI1_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+}
+
+extern "C"  void EXTI9_5_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
+}
+
+extern "C" void EXTI15_10_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
+}
+ 
+int main(void) 
+{
 
 	/* Initialize main peripherals */
     HAL_Init();
     SystemClock_Config();
-
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
+  
     MX_GPIO_Init();
-
     MX_SPI1_Init();
-
+    
+    // Initialize ADCs
     MX_ADC1_Init();
-    MX_DAC1_Init();
-    MX_DMA_Init();
+    MX_ADC2_Init(); 
+    MX_TIM8_Init(); // Initialize timer for ADC2 sampling
+
+    Display::init();
+    Display::clear();
+ 
+
+ 
+    // Add ADC calibration
+    err_code = HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+    if (err_code != HAL_OK) {
+        Display::displayError("ADC1 Calib", err_code);
+    }
+
+    err_code = HAL_ADCEx_Calibration_Start(&hadc2, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+    if (err_code != HAL_OK) {
+        Display::displayError("ADC2 Calib", err_code);
+    }
+
+    // Start TIM8 with interrupt for ADC2 sampling
+ 
+    err_code =    HAL_TIM_Base_Start_IT(&htim8);
+    if (err_code != HAL_OK) {
+        Display::displayError("TIM8 Start", err_code);
+    }
 
     MPU_Config();
 
@@ -46,6 +114,7 @@ int main(void) {
     while (1) { /* Should never reach this while */ asm("nop"); }
 }
 
+ 
 
 /**
   * @brief System Clock Configuration  
@@ -55,6 +124,7 @@ void SystemClock_Config(void)
 {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+      RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
     // Configure the power supply
     HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
@@ -75,9 +145,10 @@ void SystemClock_Config(void)
     RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE; // Wide VCO range
     RCC_OscInitStruct.PLL.PLLFRACN = 0;
 
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    err_code = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+    if (err_code != HAL_OK)
     {
-        Error_Handler();
+        Display::displayError("RCC OSC", err_code);
     }
 
     // Configure the clock dividers
@@ -93,13 +164,27 @@ void SystemClock_Config(void)
     RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;   // APB4 at 100 MHz (200/2)
 
     // Set flash latency for 400 MHz operation (VOS0)
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+    err_code = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4);
+    if ( err_code != HAL_OK)
     {
-        Error_Handler();
+        Display::displayError("RCC Clock", err_code);
+    }
+
+       // Configure ADC clock - Use HCLK instead of PLL2
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+    PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_CLKP; // Use HCLK/prescaler
+    err_code = HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
+    if (err_code != HAL_OK)
+    {
+        Display::displayError("ADC Clock", err_code);
     }
 
     SCB_EnableICache();
     SCB_EnableDCache();
+    
+    // Ensure SysTick is configured properly for HAL_Delay
+    HAL_SYSTICK_Config(SystemCoreClock / 1000);
+    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 }
 
 /**
@@ -130,13 +215,13 @@ void MX_SPI1_Init(void)
     hspi1.Init.MasterKeepIOState 	    	= SPI_MASTER_KEEP_IO_STATE_DISABLE;
     hspi1.Init.IOSwap 					        = SPI_IO_SWAP_DISABLE;
 
-    if (HAL_SPI_Init(&hspi1) != HAL_OK)
+    err_code = HAL_SPI_Init(&hspi1) ;
+    if (err_code != HAL_OK)
     {
-        Error_Handler();
+        Display::displayError("SPI1 Init", err_code);
     }
 }
- 
- 
+
 
 /**
   * @brief GPIO Initialization Function
@@ -148,7 +233,6 @@ void MX_GPIO_Init(void)
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     // Enable GPIO clocks
-
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOD_CLK_ENABLE();
@@ -159,18 +243,18 @@ void MX_GPIO_Init(void)
     GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW; // Reduced from VERY_HIGH
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    // Initialize CS (D2), RES (D3), DC (D4) with strong drive
+    // Configure display control pins (CS=PD2, RES=PD3, DC=PD4)
     GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-    // Set pins to safe default states
+    // Set display pins to safe defaults
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);   // CS high (inactive)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);   // RES high (not reset)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_RESET); // DC low (command mode)
@@ -181,7 +265,26 @@ void MX_GPIO_Init(void)
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-        // CLK (PB2) - Alternate Function 9 (QUADSPI_CLK)
+ 
+    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_6 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_15;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(EXTI0_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+    HAL_NVIC_SetPriority(EXTI1_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+    // Configure QUADSPI pins
+    // CLK (PB2) and NCS (PB6)
     GPIO_InitStruct.Pin = GPIO_PIN_2;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -189,67 +292,98 @@ void MX_GPIO_Init(void)
     GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    // NCS (PB6) - Alternate Function 10 (QUADSPI_BK1_NCS)
     GPIO_InitStruct.Pin = GPIO_PIN_6;
     GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    // IO0 (PD11) - Alternate Function 9 (QUADSPI_BK1_IO0)
-    GPIO_InitStruct.Pin = GPIO_PIN_11;
+    // IO0 (PD11), IO1 (PD12), IO3 (PD13)
+    GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
     GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-    // IO1 (PD12) - Alternate Function 9 (QUADSPI_BK1_IO1)
-    GPIO_InitStruct.Pin = GPIO_PIN_12;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-    // IO2 (PE2) - Alternate Function 9 (QUADSPI_BK1_IO2)
+    // IO2 (PE2)
     GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-    // IO3 (PD13) - Alternate Function 9 (QUADSPI_BK1_IO3)
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+    GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 ;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    __enable_irq();
 }
 
 /**
-  * @brief Initialize ADC 1 on PA0, 16Bit resolution
+  * @brief Initialize ADC 1, 16Bit resolution
   * @param None
   * @retval None
   */
-void MX_ADC1_Init(void) {
+void MX_ADC1_Init(void) 
+{
   ADC_ChannelConfTypeDef sConfig = {0};
 
-  /** Common config */
-  hadc1.Instance 					= ADC1;
-  hadc1.Init.ClockPrescaler 		= ADC_CLOCK_ASYNC_DIV2; // Adjust depending on your ADC clock
-  hadc1.Init.Resolution 			= ADC_RESOLUTION_16B;
-  hadc1.Init.ScanConvMode 			= DISABLE;
-  hadc1.Init.EOCSelection 			= ADC_EOC_SINGLE_CONV;
-  hadc1.Init.LowPowerAutoWait 		= DISABLE;
-  hadc1.Init.ContinuousConvMode 	= ENABLE;
-  hadc1.Init.NbrOfConversion 		= 1;
-  hadc1.Init.DiscontinuousConvMode  = DISABLE;
-  hadc1.Init.ExternalTrigConv 		= ADC_SOFTWARE_START;
-  hadc1.Init.ExternalTrigConvEdge 	= ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.Overrun 				= ADC_OVR_DATA_OVERWRITTEN;
-  hadc1.Init.OversamplingMode 		= DISABLE;
+  /** Common config for polling mode */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
+  hadc1.Init.Resolution = ADC_RESOLUTION_16B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;  
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;  
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  hadc1.Init.OversamplingMode = DISABLE;
+  hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;   
 
   __HAL_RCC_ADC12_CLK_ENABLE();
-  if (HAL_ADC_Init(&hadc1) != HAL_OK) {
-    Error_Handler();
+  err_code = HAL_ADC_Init(&hadc1);
+  if (err_code != HAL_OK) {
+    Display::displayError("ADC1 Init", err_code);
   }
 
   /** Configure Regular Channel */
-  sConfig.Channel       = ADC_CHANNEL_0; // PA0
-  sConfig.Rank   		= ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime  = ADC_SAMPLETIME_64CYCLES_5;
-  sConfig.SingleDiff 	= ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber 	= ADC_OFFSET_NONE;
-  sConfig.Offset 		= 0;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
-    Error_Handler();
+  sConfig.Channel = ADC_CHANNEL_11;  // PC1
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_64CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+
+  err_code = HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+  if (err_code != HAL_OK) {
+    Display::displayError("ADC1 CH0", err_code);
   }
+}
+
+void MX_ADC2_Init(void)
+{
+    // ADC2 Configuration for polling mode
+    hadc2.Instance = ADC2;
+    hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
+    hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+    hadc2.Init.ScanConvMode = DISABLE;  // Disable scan mode for polling
+    hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+    hadc2.Init.LowPowerAutoWait = DISABLE;
+    hadc2.Init.ContinuousConvMode = DISABLE;  // Single conversion mode
+    hadc2.Init.NbrOfConversion = 1;           // Single conversion
+    hadc2.Init.DiscontinuousConvMode = DISABLE;
+    hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;  // Software trigger
+    hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;  // Direct register
+    hadc2.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+    hadc2.Init.OversamplingMode = DISABLE;
+    
+    __HAL_RCC_ADC12_CLK_ENABLE();
+    err_code = HAL_ADC_Init(&hadc2);
+    if (err_code != HAL_OK)
+    {
+        Display::displayError("ADC2 Init", err_code);
+        return;
+    }
 }
 
 /**
@@ -262,8 +396,9 @@ void MX_DAC1_Init(void) {
 
   hdac1.Instance = DAC1;
   __HAL_RCC_DAC12_CLK_ENABLE();
-  if (HAL_DAC_Init(&hdac1) != HAL_OK) {
-    Error_Handler();
+  err_code = HAL_DAC_Init(&hdac1) ;
+  if (err_code != HAL_OK) {
+    Display::displayError("DAC1 Init", err_code);
   }
 
   sConfig.DAC_SampleAndHold 		  = DAC_SAMPLEANDHOLD_DISABLE;
@@ -272,8 +407,9 @@ void MX_DAC1_Init(void) {
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
   sConfig.DAC_UserTrimming 		      = DAC_TRIMMING_FACTORY;
 
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK) {
-    Error_Handler();
+  err_code = HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) ;
+  if (err_code != HAL_OK) {
+    Display::displayError("DAC1 CH0", err_code);
   }
 }
 
@@ -282,70 +418,103 @@ void MX_DAC1_Init(void) {
   * @param None
   * @retval None
   */
-void MX_DMA_Init(void) {
+ /*
+ void MX_DMA_Init(void) {
+
+  // Configure DMA for ADC1 - Check your STM32H7 reference manual for correct stream
+  // For ADC1, it's typically DMA1_Stream0 or DMA1_Stream1
+  hdma_adc1.Instance = DMA1_Stream0;
+  hdma_adc1.Init.Request = DMA_REQUEST_ADC1;
+  hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
+  hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD; // 16-bit data
+  hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+  hdma_adc1.Init.Mode = DMA_CIRCULAR;
+  hdma_adc1.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_adc1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+
   __HAL_RCC_DMA1_CLK_ENABLE();
-
-  // ADC1 DMA Init
-  hdma_adc1.Instance 	   			 = DMA1_Stream0;
-  hdma_adc1.Init.Request   			 = DMA_REQUEST_ADC1;
-  hdma_adc1.Init.Direction 			 = DMA_PERIPH_TO_MEMORY;
-  hdma_adc1.Init.PeriphInc 			 = DMA_PINC_DISABLE;
-  hdma_adc1.Init.MemInc   			 = DMA_MINC_ENABLE;
-  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-  hdma_adc1.Init.MemDataAlignment 	 = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc1.Init.Mode 				 = DMA_CIRCULAR;
-  hdma_adc1.Init.Priority 			 = DMA_PRIORITY_HIGH;
-  hdma_adc1.Init.FIFOMode 			 = DMA_FIFOMODE_DISABLE;
-
-  if (HAL_DMA_Init(&hdma_adc1) != HAL_OK) {
-    Error_Handler();
+  err_code = HAL_DMA_Init(&hdma_adc1);
+  if (err_code != HAL_OK) {
+    Display::displayError("DMA ADC1 Init", err_code);
   }
+
+  // Link DMA to ADC
   __HAL_LINKDMA(&hadc1, DMA_Handle, hdma_adc1);
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  
 
-  // DAC1 DMA Init
-  hdma_dac1.Instance 				 = DMA1_Stream5; // Pick an unused stream for DAC
-  hdma_dac1.Init.Request 			 = DMA_REQUEST_DAC1_CH1;
-  hdma_dac1.Init.Direction 			 = DMA_MEMORY_TO_PERIPH;
-  hdma_dac1.Init.PeriphInc 		 	 = DMA_PINC_DISABLE;
-  hdma_dac1.Init.MemInc 			 = DMA_MINC_ENABLE;
-  hdma_dac1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-  hdma_dac1.Init.MemDataAlignment 	 = DMA_MDATAALIGN_HALFWORD;
-  hdma_dac1.Init.Mode 				 = DMA_CIRCULAR;
-  hdma_dac1.Init.Priority 			 = DMA_PRIORITY_MEDIUM;
-  hdma_dac1.Init.FIFOMode 			 = DMA_FIFOMODE_DISABLE;
+  // HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
+  // HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 
-  if (HAL_DMA_Init(&hdma_dac1) != HAL_OK) {
-    Error_Handler();
-  }
-  __HAL_LINKDMA(&hdac1, DMA_Handle1, hdma_dac1);  // Channel 1
+  //   // Configure DMA for ADC2 - Using DMA1_Stream1
+  // hdma_adc2.Instance = DMA1_Stream1;
+  // hdma_adc2.Init.Request = DMA_REQUEST_ADC2;
+  // hdma_adc2.Init.Direction = DMA_PERIPH_TO_MEMORY;
+  // hdma_adc2.Init.PeriphInc = DMA_PINC_DISABLE;
+  // hdma_adc2.Init.MemInc = DMA_MINC_ENABLE;
+  // hdma_adc2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD; // 16-bit data
+  // hdma_adc2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+  // hdma_adc2.Init.Mode = DMA_CIRCULAR;
+  // hdma_adc2.Init.Priority = DMA_PRIORITY_HIGH;
+  // hdma_adc2.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  
+  // err_code = HAL_DMA_Init(&hdma_adc2);
+  // if (err_code != HAL_OK) {
+  //   Display::displayError("DMA ADC2 Init", err_code);
+  // }
 
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  // // Link DMA to ADC2
+  // __HAL_LINKDMA(&hadc2, DMA_Handle, hdma_adc2);
+
+  // HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 2, 0);
+  // HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 }
 
+ 
+ */
 
 void MX_TIM6_Init(void) {
-  __HAL_RCC_TIM6_CLK_ENABLE();
 
-  htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 249;
-  htim6.Init.Period = 3399;
-  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  if (HAL_TIM_Base_Init(&htim6) != HAL_OK) {
-    Error_Handler();
-  }
+    htim6.Instance = TIM6;
+    htim6.Init.Prescaler = 249; // Adjust prescaler for desired frequency
+    htim6.Init.Period = 3399;   // Adjust period for desired frequency
+    htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+    
+    __HAL_RCC_TIM6_CLK_ENABLE();
+    err_code = HAL_TIM_Base_Init(&htim6);
+    if (err_code != HAL_OK) {
+        Display::displayError("TIM6 Init", err_code);
+    }
 
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
 
-  HAL_TIM_Base_Start(&htim6);
+    HAL_TIM_Base_Start(&htim6);
 }
 
+ void MX_TIM8_Init(void)
+{
+    htim8.Instance = TIM8;
+    htim8.Init.Prescaler = 39999;  // 200MHz / 40000 = 5kHz (APB2 timer clock is 200MHz)
+    htim8.Init.Period = 499;       // 5kHz / 500 = 10Hz (100ms period)
+    htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim8.Init.RepetitionCounter = 0;
+    htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  
+    __HAL_RCC_TIM8_CLK_ENABLE();
+    err_code = HAL_TIM_Base_Init(&htim8);
+    if (err_code != HAL_OK) {
+        Display::displayError("TIM8 Init", err_code);
+    }
 
+    // Enable timer interrupt
+    HAL_NVIC_SetPriority(TIM8_UP_TIM13_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
+}
 static void MPU_Config(void)
 {
     MPU_Region_InitTypeDef MPU_InitStruct = {0};
@@ -370,8 +539,6 @@ static void MPU_Config(void)
 
 
 
-
-
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
@@ -390,3 +557,5 @@ void assert_failed(uint8_t *file, uint32_t line)
     /* User can add implementation to report the file name and line number */
 }
 #endif
+
+

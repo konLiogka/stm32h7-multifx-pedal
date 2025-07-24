@@ -256,63 +256,25 @@ namespace QSPIFlash {
             Pedal* pedal = chain->getPedal(i);
             if (pedal) {
                 float* params = reinterpret_cast<float*>(p + 1);
-                pedal->volume = params[0];
-                pedal->highs = params[1];
-                pedal->lows = params[2];
-                pedal->gain = params[3];
-                pedal->tone = params[4];
-                pedal->level = params[5];
-                pedal->delayTime = params[6];
-                pedal->feedback = params[7];
-                pedal->mix = params[8];
-                pedal->cutoffFrequency = params[9];
-                pedal->resonance = params[10];
-                pedal->depth = params[11];
-                pedal->rate = params[12];
-                pedal->threshold = params[13];
-                pedal->ratio = params[14];
-                pedal->attack = params[15];
-                pedal->release = params[16];
+                pedal->setParams(params);
             }
         }
         return HAL_OK;
     }
-
-    HAL_StatusTypeDef saveEffectsChain(const EffectsChain* chain) {
+    HAL_StatusTypeDef   saveEffectsChain(const EffectsChain* chain) {
         if (!chain) {
             return HAL_ERROR;
         }
 
- 
         uint8_t pedalData[NUM_PEDALS * PEDAL_LEN] = {};
-
         for (int i = 0; i < NUM_PEDALS; i++) {
             Pedal* pedal = chain->getPedal(i);
-            uint8_t* p = &pedalData[i * PEDAL_LEN];
+            PedalType type = pedal ? pedal->getType() : PedalType::PASS_THROUGH;
+            pedalData[i * PEDAL_LEN] = static_cast<uint8_t>(type);
+
             if (pedal) {
-                p[0] = static_cast<uint8_t>(pedal->getType());
-                float* params = reinterpret_cast<float*>(p + 1);
-                params[0] = pedal->volume;
-                params[1] = pedal->highs;
-                params[2] = pedal->lows;
-                params[3] = pedal->gain;
-                params[4] = pedal->tone;
-                params[5] = pedal->level;
-                params[6] = pedal->delayTime;
-                params[7] = pedal->feedback;
-                params[8] = pedal->mix;
-                params[9] = pedal->cutoffFrequency;
-                params[10] = pedal->resonance;
-                params[11] = pedal->depth;
-                params[12] = pedal->rate;
-                params[13] = pedal->threshold;
-                params[14] = pedal->ratio;
-                params[15] = pedal->attack;
-                params[16] = pedal->release;
-            } else {
-                p[0] = static_cast<uint8_t>(PedalType::PASS_THROUGH);
-                float* params = reinterpret_cast<float*>(p + 1);
-                for (int j = 0; j < NUM_FLOATS; j++) params[j] = 0.0f;
+                float* params = reinterpret_cast<float*>(&pedalData[i * PEDAL_LEN + 1]);
+                pedal->getParams(params);
             }
         }
 

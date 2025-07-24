@@ -9,7 +9,7 @@
 extern SPI_HandleTypeDef hspi1;
 extern QSPI_HandleTypeDef qhspi;
 
-void mainApp(void);
 
+void mainApp(void);
 
 #endif /* INC_MAINAPP_HPP_ */

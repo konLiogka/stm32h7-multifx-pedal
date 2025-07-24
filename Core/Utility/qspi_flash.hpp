@@ -15,8 +15,7 @@ For Winbond Q25W64JV NOR Flash Memory (8MB)
 #define CHAIN_STORAGE_ADDR 0x1000  
 
 constexpr int NUM_PEDALS = 4;
-constexpr int NUM_FLOATS = 16;
-constexpr int PEDAL_LEN  = 1 + sizeof(float) * NUM_FLOATS;
+constexpr int PEDAL_LEN  = 21;  // 1 byte for type + 5 floats (20 bytes) max
 
 /* QSPI handler for Winbond Q25W64JV */
 extern QSPI_HandleTypeDef hqspi;

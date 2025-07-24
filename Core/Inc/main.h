@@ -16,8 +16,12 @@ extern "C" {
     extern QSPI_HandleTypeDef hqspi;
     extern ADC_HandleTypeDef hadc1;
     extern DAC_HandleTypeDef hdac1;
+    extern ADC_HandleTypeDef hadc2;
+
     extern DMA_HandleTypeDef hdma_adc1;
+
     extern DMA_HandleTypeDef hdma_dac;
+
 
     void Error_Handler(void);
 

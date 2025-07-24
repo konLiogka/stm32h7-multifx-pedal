@@ -15,6 +15,7 @@ public:
     void setPedal(int index, PedalType type);
     Pedal* getPedal(int index) const;
     void draw() const;
+    void clear();
 
 private:
     Pedal* pedals[4];
