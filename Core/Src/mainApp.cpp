@@ -13,6 +13,13 @@
 
 #define BUFFER_SIZE 1024
 #define THRESHOLD 4
+#define CONTROL_VIEW_B GPIO_PIN_0
+#define SELECT_PEDAL_0 GPIO_PIN_6
+#define SELECT_PEDAL_1 GPIO_PIN_15
+#define SELECT_PEDAL_2 GPIO_PIN_10
+#define SELECT_PEDAL_3 GPIO_PIN_1
+#define PEDAL_0 GPIO_PIN_9
+#define PEDAL_1 GPIO_PIN_8
 
 enum class displayView {
     PEDALCHAIN_VIEW,
@@ -27,8 +34,9 @@ uint16_t adc_buf[BUFFER_SIZE] __attribute__((aligned(4)));
 uint16_t dac_buf[BUFFER_SIZE] __attribute__((aligned(4))); 
 
 uint32_t potValues[3]; 
-bool potTouched[3] = {false, false, false};
+uint8_t potTouchedFlags = 0; // Bitfield: bit 0 = pot0, bit 1 = pot1, bit 2 = pot2
 Pedal* selectedPedal =  Pedal::createPedal(PedalType::PASS_THROUGH);
+uint8_t page = 0;
 
 
 
@@ -36,6 +44,7 @@ void updateSelectedPedal(uint8_t index)
 {
     selectedPedal = loadedChain.getPedal(index); 
     loadedChain.selectedPedal = index;
+    
 }
 
 void mainApp(void)
@@ -44,6 +53,10 @@ void mainApp(void)
 
     Display::init();
     Display::clear();
+
+    Display::drawBitmap(startup_screen_bitmap, 0, 0);
+
+    HAL_Delay(3000);
     Display::drawBitmap(base_chain_bitmap, 0, 0);
     
  
@@ -89,7 +102,7 @@ void mainApp(void)
 
 }
 
- extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     static uint32_t last_tick = 0;
     uint32_t tick = HAL_GetTick();
@@ -99,7 +112,7 @@ void mainApp(void)
 
         switch (GPIO_Pin)
         {
-        case GPIO_PIN_0: 
+        case CONTROL_VIEW_B: 
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
@@ -110,7 +123,7 @@ void mainApp(void)
             case displayView::PEDALSELECT_VIEW:
                 Display::drawBitmap(mod_pedal_bitmap, 0, 0);
                 displayPedalSettings(selectedPedal, 0);
-                potTouched[0] = potTouched[1] = potTouched[2] = false;
+                potTouchedFlags = 0;
                 currentView = displayView::PEDALEDIT_VIEW;
                 break;
 
@@ -125,9 +138,37 @@ void mainApp(void)
             break;  
         
 
-        case GPIO_PIN_1: 
+        case PEDAL_0: 
+        if (currentView == displayView::PEDALEDIT_VIEW) {
+                Display::drawBitmap(mod_pedal_bitmap, 0, 0);
+                
+                displayPedalSettings(selectedPedal, 1);
+                page = 1;
+                break;
+        }
+        
+             
+        case PEDAL_1: 
+            if (currentView == displayView::PEDALSELECT_VIEW) {
+                PedalType currentType = selectedPedal->getType();
+                
+                int direction = (GPIO_Pin == PEDAL_0) ? 1 : -1;
+                int newTypeIndex = (static_cast<int>(currentType) + direction + 4) % 4;
+                if (newTypeIndex < 0) newTypeIndex += 4;
+                
+                selectedPedal = Pedal::createPedal(static_cast<PedalType>(newTypeIndex));
+
+                loadedChain.setPedal(loadedChain.selectedPedal,  selectedPedal->getType());
+                displaySelectedPedal(selectedPedal);
+            }else if (currentView == displayView::PEDALEDIT_VIEW) {
+                Display::drawBitmap(mod_pedal_bitmap, 0, 0);
+                displayPedalSettings(selectedPedal, 0);
+                page = 0;
+            }
+             
             break;
-        case GPIO_PIN_6: 
+
+        case SELECT_PEDAL_0: 
 
             switch (currentView)
             {
@@ -143,16 +184,9 @@ void mainApp(void)
             break;
         
 
-        case GPIO_PIN_8: 
-            switch (currentView)
-            {
-                // handle view here
-            }
-            break;
-        
 
-        case GPIO_PIN_9:
-        case GPIO_PIN_10: 
+
+        case SELECT_PEDAL_2: 
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
@@ -164,11 +198,8 @@ void mainApp(void)
                 break;
             }
             break;
-        
- 
 
-
-        case GPIO_PIN_15: 
+        case SELECT_PEDAL_1: 
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
@@ -180,7 +211,18 @@ void mainApp(void)
                 break;
             }
             break;
-        
+        case SELECT_PEDAL_3:
+            switch (currentView)
+            {
+            case displayView::PEDALCHAIN_VIEW:
+                if (loadedChain.selectedPedal == 3) {
+                    // disablePedal(selectedPedal);
+                } else {
+                    updateSelectedPedal(3);
+                }
+                break;
+            }
+            break;
 
         default:
             break;
@@ -188,11 +230,6 @@ void mainApp(void)
 
         last_tick = tick;  
     }  
-}
-
-void displayVolume(void)
-{
-    
 }
 
 static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
@@ -222,54 +259,59 @@ static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
     }
 };
 
+ 
+
 extern "C"  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM8) {
-        bool anyPotTouched = false;
+if (htim->Instance == TIM8) {
+    uint8_t anyPotTouched = 0x00;
+    
+    for (int channel = 0; channel < 3; channel++) {
+        HAL_ADC_ConfigChannel(&hadc2, &adcChannelConfigs[channel]);
+        HAL_ADC_Start(&hadc2);
         
-        for (int channel = 0; channel < 3; channel++) {
-            HAL_ADC_ConfigChannel(&hadc2, &adcChannelConfigs[channel]);
+        if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK) {
+            uint32_t rawValue = HAL_ADC_GetValue(&hadc2);
             
-            HAL_ADC_Start(&hadc2);
-            if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK) {
-                uint32_t rawValue = HAL_ADC_GetValue(&hadc2);
-                uint32_t newValue = (((rawValue * 20) >> 12) * 5) + 5;
-                
-                if (abs((int)newValue - (int)potValues[channel]) > THRESHOLD) {
-                    potValues[channel] = newValue;
-                    if (currentView == displayView::PEDALEDIT_VIEW) {
-                        potTouched[channel] = true;
-                        anyPotTouched = true;
-                    }
+            uint32_t scaledValue = (rawValue * 25) >> 10;  
+            
+            uint32_t newValue = ((scaledValue + 2) / 5) * 5;
+            
+            if (abs((int)newValue - (int)potValues[channel]) >= 10) {
+                potValues[channel] = newValue;
+                if (currentView == displayView::PEDALEDIT_VIEW) {
+                    potTouchedFlags |= (1 << channel);
+                    anyPotTouched = 0x01;
                 }
             }
-            HAL_ADC_Stop(&hadc2);
         }
-
-        switch(currentView) {
-            case displayView::PEDALCHAIN_VIEW:
-            case displayView::PEDALSELECT_VIEW:
-                displayVolume();
-                break;
-                
-            case displayView::PEDALEDIT_VIEW:
-                if (anyPotTouched) {
-                    float* params = new float[selectedPedal->getMemberSize()];
-                    selectedPedal->getParams(params);
-                    
-                    for (int i = 0; i < 3 && i < selectedPedal->getMemberSize(); i++) {
-                        if (potTouched[i]) {
-                            params[i] = potValues[i] / 100.0f;
-                        }
-                    }
-                    
-                    selectedPedal->setParams(params);
-                    displayPedalSettings(selectedPedal, 0);
-                    delete[] params;
-                }
-                break;
-        }
+        HAL_ADC_Stop(&hadc2);
     }
+
+    if (potTouchedFlags && currentView == displayView::PEDALEDIT_VIEW) {
+        uint8_t numParams = selectedPedal->getMemberSize();
+        uint8_t index = (page == 1 && numParams > 3) ? 3 : 0;
+        uint8_t endIndex = (numParams < index + 3) ? numParams : index + 3;
+        
+         
+        float* params = new float[numParams];
+        selectedPedal->getParams(params);
+        
+        for (int i = index; i < endIndex; i++) {
+            uint8_t potIndex = i - index;
+            if (potTouchedFlags & (1 << potIndex)) {
+                params[i] = potValues[potIndex] * 0.01f;
+            }
+        }
+        selectedPedal->setParams(params);
+        delete[] params;
+        
+        
+        displayPedalSettings(selectedPedal, page);
+    }
+    
+    potTouchedFlags = 0;
+}
 }
 
 

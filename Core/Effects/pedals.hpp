@@ -113,10 +113,6 @@ public:
 class PassThroughPedal : public Pedal {
 public:
     PassThroughPedal() : Pedal(PedalType::PASS_THROUGH) {
-        volume = 1.0f; 
-        highs = 0.5f;
-        mids = 0.5f;
-        lows = 0.5f;
     }
     
     float highs;

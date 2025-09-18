@@ -33,15 +33,13 @@ void displayPedalSettings(Pedal *pedal, uint8_t page)
 {
     if (pedal == nullptr) return;
 
-
-
     const char* const* names = pedal->getMemberNames();
     float* params = new float[pedal->getMemberSize()];
     pedal->getParams(params);
     uint8_t numParams = pedal->getMemberSize();
     uint8_t char_width = 6;
     uint8_t index = 0;
-    if (page == 1)
+    if (page == 1 && numParams > 3)
     {
         index = 3;
     }
@@ -66,31 +64,4 @@ void displayPedalSettings(Pedal *pedal, uint8_t page)
         Display::drawBitmap(arrow_left_bitmap, 0, 3);
     }
     delete[] params;
-
-}
-
-
-
-void changePedalSettings(Pedal *pedal, uint8_t page, uint32_t potValues[3])
-{
-    if (pedal == nullptr) return;
-
-    uint8_t index = 0;
-    if (page == 1)
-    {
-        index = 3;
-    }
-
-    float* params = new float[pedal->getMemberSize()];
-    pedal->getParams(params);
-    uint8_t numParams = pedal->getMemberSize();
-
-    for (uint8_t i = 0; i < 3; i++) {
-        if (i + index >= numParams) break;
-        params[i + index] = potValues[i] / 100.0f;
-    }
-
-    pedal->setParams(params);
-    delete[] params;
-    displayPedalSettings(pedal, page);
 }
