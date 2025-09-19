@@ -58,7 +58,7 @@ public:
     float crunch;
 
     const uint8_t member_size = 5; 
-    static constexpr const char* memberNames[5] = {"Vol", "Gain", "Tone", "Level", "Crunch"};
+    static constexpr const char* memberNames[5] = {"Vol", "Gain", "Tone", "Level", "Crnch"};
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
 
@@ -80,7 +80,7 @@ public:
     float feedback;
     float mix;
     const uint8_t member_size = 4; 
-    static constexpr const char* memberNames[4] = {"Vol", "Delay", "Feedback", "Mix"};
+    static constexpr const char* memberNames[4] = {"Vol", "Delay", "Fdbck", "Mix"};
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
 

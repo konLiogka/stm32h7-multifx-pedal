@@ -44,6 +44,11 @@ void updateSelectedPedal(uint8_t index)
     selectedPedal = loadedChain.getPedal(index); 
     loadedChain.selectedPedal = index;
     
+    for(uint8_t x = 0; x < 128; x += 8) {
+        Display::drawString("        ", x, 15);
+    }
+    
+    Display::drawBitmap(indicator_bitmap, 26*index + 21, 15);
 }
 
 void showStartupScreen() {
@@ -94,22 +99,23 @@ void mainApp(void)
         Error_Handler();
     }
 
-    EffectsChain chain;
+    // EffectsChain chain;
 
-    chain.setPedal(0, PedalType::OVERDRIVE_DISTORTION);
-    chain.setPedal(1, PedalType::REVERB);
-    chain.setPedal(2, PedalType::ECHO);
-    chain.setPedal(3, PedalType::PASS_THROUGH);
+    // chain.setPedal(0, PedalType::OVERDRIVE_DISTORTION);
+    // chain.setPedal(1, PedalType::REVERB);
+    // chain.setPedal(2, PedalType::ECHO);
+    // chain.setPedal(3, PedalType::PASS_THROUGH);
 
-    if (QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK) {
-        Display::displayError("QSPI erase Flash", QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR));
-        Error_Handler();
-    }
+    // if (QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK) {
+    //     Display::displayError("QSPI erase Flash", QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR));
+    //     Error_Handler();
+    // }
 
-    if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK) {
-        Display::displayError("QSPI save Flash", QSPIFlash::saveEffectsChain(&chain)  );
-        Error_Handler();
-    }
+    // if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK) {
+    //     Display::displayError("QSPI save Flash", QSPIFlash::saveEffectsChain(&chain)  );
+    //     Error_Handler();
+    // }
+
     loadedChain.clear();
     if (QSPIFlash::loadEffectsChain(&loadedChain) != HAL_OK) {
         Display::displayError("QSPI load Flash", QSPIFlash::loadEffectsChain(&loadedChain)  );
@@ -292,29 +298,27 @@ static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
 extern "C"  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 if (htim->Instance == TIM8) {
-    uint8_t anyPotTouched = 0x00;
     
-    for (int channel = 0; channel < 3; channel++) {
-        HAL_ADC_ConfigChannel(&hadc2, &adcChannelConfigs[channel]);
-        HAL_ADC_Start(&hadc2);
+for (int channel = 0; channel < 3; channel++) {
+    HAL_ADC_ConfigChannel(&hadc2, &adcChannelConfigs[channel]);
+    HAL_ADC_Start(&hadc2);
+    
+    if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK) {
+        uint32_t rawValue = 4095 - HAL_ADC_GetValue(&hadc2);  // Invert the 12-bit value
         
-        if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK) {
-            uint32_t rawValue = HAL_ADC_GetValue(&hadc2);
-            
-            uint32_t scaledValue = (rawValue * 25) >> 10;  
-            
-            uint32_t newValue = ((scaledValue + 2) / 5) * 5;
-            
-            if (abs((int)newValue - (int)potValues[channel]) >= 10) {
-                potValues[channel] = newValue;
-                if (currentView == displayView::PEDALEDIT_VIEW) {
-                    potTouchedFlags |= (1 << channel);
-                    anyPotTouched = 0x01;
-                }
+        uint32_t normalized_value = (((rawValue * 20) >> 12) * 5) + 5;
+        
+        if (normalized_value > 100) normalized_value = 100;
+        
+        if (abs((int)normalized_value - (int)potValues[channel]) >= 5) {
+            potValues[channel] = normalized_value;
+            if (currentView == displayView::PEDALEDIT_VIEW) {
+                potTouchedFlags |= (1 << channel);
             }
         }
-        HAL_ADC_Stop(&hadc2);
     }
+    HAL_ADC_Stop(&hadc2);
+}
 
     if (potTouchedFlags && currentView == displayView::PEDALEDIT_VIEW) {
         uint8_t numParams = selectedPedal->getMemberSize();

@@ -89,6 +89,9 @@ extern const Bitmap arrow_right_bitmap;
 extern const uint8_t arrow_left[8*16];
 extern const Bitmap arrow_left_bitmap;
 
+extern const uint8_t indicator[32];
+extern const Bitmap indicator_bitmap;
+
 extern const uint8_t mod_pedal_val_0[MOD_BAR_SIZE];
 extern const uint8_t mod_pedal_val_1[MOD_BAR_SIZE];
 extern const uint8_t mod_pedal_val_2[MOD_BAR_SIZE];
