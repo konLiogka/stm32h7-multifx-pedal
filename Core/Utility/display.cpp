@@ -131,7 +131,7 @@ void drawFloat(float value, uint8_t x, uint8_t page) {
             currentX += 6;
             intPart %= 100;
         }
-        if (intPart >= 10 || (intPart < 10 && currentX > x)) { // Draw tens if we have hundreds or if tens digit exists
+        if (intPart >= 10 || (intPart < 10 && currentX > x)) {  
             drawDigit(intPart / 10, currentX, page);
             currentX += 6;
             intPart %= 10;
@@ -174,7 +174,7 @@ void printf(uint8_t x, uint8_t page, const char* format, ...) {
     
     uint8_t currentX = x;
     const char* ptr = format;
-    char buffer[16]; // Buffer for number to string conversion
+    char buffer[16]; 
     
     while (*ptr && currentX < DISPLAY_WIDTH) {
         if (*ptr == '%' && *(ptr + 1)) {

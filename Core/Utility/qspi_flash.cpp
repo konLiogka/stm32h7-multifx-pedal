@@ -111,7 +111,7 @@ namespace QSPIFlash {
             return HAL_ERROR;
         }
         
-        // Check W25Q64 ID: 0xEF4017
+        // W25Q64 ID: 0xEF4017
         if (id[0] != 0xEF || id[1] != 0x40 || id[2] != 0x17) {
             return HAL_ERROR;
         }
@@ -122,18 +122,18 @@ namespace QSPIFlash {
     HAL_StatusTypeDef read(uint32_t address, uint8_t* data, uint32_t size) {
         QSPI_CommandTypeDef cmd = {0};
         
-        cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        cmd.Instruction = W25Q64_READ_DATA;
-        cmd.AddressMode = QSPI_ADDRESS_1_LINE;
-        cmd.AddressSize = QSPI_ADDRESS_24_BITS;
-        cmd.Address = address;
+        cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+        cmd.Instruction       = W25Q64_READ_DATA;
+        cmd.AddressMode       = QSPI_ADDRESS_1_LINE;
+        cmd.AddressSize       = QSPI_ADDRESS_24_BITS;
+        cmd.Address           = address;
         cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-        cmd.DataMode = QSPI_DATA_1_LINE;
-        cmd.DummyCycles = 0;
-        cmd.NbData = size;
-        cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-        cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-        cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        cmd.DataMode          = QSPI_DATA_1_LINE;
+        cmd.DummyCycles       = 0;
+        cmd.NbData            = size;
+        cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
+        cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+        cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
@@ -160,18 +160,18 @@ namespace QSPIFlash {
             uint32_t write_size = (remaining < page_remaining) ? remaining : page_remaining;
             
             QSPI_CommandTypeDef cmd = {0};
-            cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-            cmd.Instruction = W25Q64_PAGE_PROGRAM;
-            cmd.AddressMode = QSPI_ADDRESS_1_LINE;
-            cmd.AddressSize = QSPI_ADDRESS_24_BITS;
-            cmd.Address = current_addr;
-            cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-            cmd.DataMode = QSPI_DATA_1_LINE;
-            cmd.DummyCycles = 0;
-            cmd.NbData = write_size;
-            cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-            cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-            cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+            cmd.InstructionMode     = QSPI_INSTRUCTION_1_LINE;
+            cmd.Instruction         = W25Q64_PAGE_PROGRAM;
+            cmd.AddressMode         = QSPI_ADDRESS_1_LINE;
+            cmd.AddressSize         = QSPI_ADDRESS_24_BITS;
+            cmd.Address             = current_addr;
+            cmd.AlternateByteMode   = QSPI_ALTERNATE_BYTES_NONE;
+            cmd.DataMode            = QSPI_DATA_1_LINE;
+            cmd.DummyCycles         = 0;
+            cmd.NbData              = write_size;
+            cmd.DdrMode             = QSPI_DDR_MODE_DISABLE;
+            cmd.DdrHoldHalfCycle    = QSPI_DDR_HHC_ANALOG_DELAY;
+            cmd.SIOOMode            = QSPI_SIOO_INST_EVERY_CMD;
             
             if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
                 return HAL_ERROR;
@@ -197,17 +197,17 @@ namespace QSPIFlash {
         }
         
         QSPI_CommandTypeDef cmd = {0};
-        cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        cmd.Instruction = W25Q64_SECTOR_ERASE;
-        cmd.AddressMode = QSPI_ADDRESS_1_LINE;
-        cmd.AddressSize = QSPI_ADDRESS_24_BITS;
-        cmd.Address = address;
-        cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-        cmd.DataMode = QSPI_DATA_NONE;
-        cmd.DummyCycles = 0;
-        cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-        cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-        cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        cmd.InstructionMode     = QSPI_INSTRUCTION_1_LINE;
+        cmd.Instruction         = W25Q64_SECTOR_ERASE;
+        cmd.AddressMode         = QSPI_ADDRESS_1_LINE;
+        cmd.AddressSize         = QSPI_ADDRESS_24_BITS;
+        cmd.Address             = address;
+        cmd.AlternateByteMode   = QSPI_ALTERNATE_BYTES_NONE;
+        cmd.DataMode            = QSPI_DATA_NONE;
+        cmd.DummyCycles         = 0;
+        cmd.DdrMode             = QSPI_DDR_MODE_DISABLE;
+        cmd.DdrHoldHalfCycle    = QSPI_DDR_HHC_ANALOG_DELAY;
+        cmd.SIOOMode            = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
@@ -222,15 +222,15 @@ namespace QSPIFlash {
         }
         
         QSPI_CommandTypeDef cmd = {0};
-        cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        cmd.Instruction = W25Q64_CHIP_ERASE;
-        cmd.AddressMode = QSPI_ADDRESS_NONE;
-        cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-        cmd.DataMode = QSPI_DATA_NONE;
-        cmd.DummyCycles = 0;
-        cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-        cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-        cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        cmd.InstructionMode     = QSPI_INSTRUCTION_1_LINE;
+        cmd.Instruction         = W25Q64_CHIP_ERASE;
+        cmd.AddressMode         = QSPI_ADDRESS_NONE;
+        cmd.AlternateByteMode   = QSPI_ALTERNATE_BYTES_NONE;
+        cmd.DataMode            = QSPI_DATA_NONE;
+        cmd.DummyCycles         = 0;
+        cmd.DdrMode             = QSPI_DDR_MODE_DISABLE;
+        cmd.DdrHoldHalfCycle    = QSPI_DDR_HHC_ANALOG_DELAY;
+        cmd.SIOOMode            = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
@@ -261,6 +261,7 @@ namespace QSPIFlash {
         }
         return HAL_OK;
     }
+    
     HAL_StatusTypeDef   saveEffectsChain(const EffectsChain* chain) {
         if (!chain) {
             return HAL_ERROR;

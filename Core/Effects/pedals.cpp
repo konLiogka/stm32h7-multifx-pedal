@@ -42,9 +42,9 @@ Pedal* Pedal::createPedal(PedalType type) {
 
 void DistortionPedal::setParams(float* params) {
     volume = params[0];
-    gain = params[1];
-    tone = params[2];
-    level = params[3];
+    gain   = params[1];
+    tone   = params[2];
+    level  = params[3];
     crunch = params[4];
 }
 
@@ -57,10 +57,10 @@ void DistortionPedal::getParams(float* params) const {
 }
 
 void EchoPedal::setParams(float* params) {
-    volume = params[0];
+    volume    = params[0];
     delayTime = params[1];
-    feedback = params[2];
-    mix = params[3];
+    feedback  = params[2];
+    mix       = params[3];
 }
 
 void EchoPedal::getParams(float* params) const {
@@ -72,9 +72,9 @@ void EchoPedal::getParams(float* params) const {
 
 void ReverbPedal::setParams(float* params) {
     volume = params[0];
-    depth = params[1];
-    rate = params[2];
-    mix = params[3];
+    depth  = params[1];
+    rate   = params[2];
+    mix    = params[3];
 }
 
 void ReverbPedal::getParams(float* params) const {
@@ -86,9 +86,9 @@ void ReverbPedal::getParams(float* params) const {
 
 void PassThroughPedal::setParams(float* params) {
     volume = params[0];
-    highs = params[1];
-    mids = params[2];
-    lows = params[3]; 
+    highs  = params[1];
+    mids   = params[2];
+    lows   = params[3]; 
 }
 
 void PassThroughPedal::getParams(float* params) const {

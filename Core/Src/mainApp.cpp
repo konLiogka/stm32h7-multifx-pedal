@@ -13,7 +13,7 @@
 
 #define BUFFER_SIZE 1024
 #define THRESHOLD 4
-#define CONTROL_VIEW_B GPIO_PIN_0
+#define SEL_VIEW_B GPIO_PIN_0
 #define SELECT_PEDAL_0 GPIO_PIN_6
 #define SELECT_PEDAL_1 GPIO_PIN_15
 #define SELECT_PEDAL_2 GPIO_PIN_10
@@ -26,6 +26,34 @@ enum class displayView {
     PEDALSELECT_VIEW,
     PEDALEDIT_VIEW,
 };  
+
+static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
+    {
+        .Channel = ADC_CHANNEL_18,
+        .Rank = ADC_REGULAR_RANK_1,
+        .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
+        .SingleDiff = ADC_SINGLE_ENDED,
+        .OffsetNumber = ADC_OFFSET_NONE,
+        .Offset = 0
+    },
+    {
+        .Channel = ADC_CHANNEL_14,
+        .Rank = ADC_REGULAR_RANK_1,
+        .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
+        .SingleDiff = ADC_SINGLE_ENDED,
+        .OffsetNumber = ADC_OFFSET_NONE,
+        .Offset = 0
+    },
+    {
+        .Channel = ADC_CHANNEL_15,
+        .Rank = ADC_REGULAR_RANK_1,
+        .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
+        .SingleDiff = ADC_SINGLE_ENDED,
+        .OffsetNumber = ADC_OFFSET_NONE,
+        .Offset = 0
+    }
+};
+
 EffectsChain loadedChain;
 displayView currentView =  displayView::PEDALCHAIN_VIEW;
 
@@ -34,7 +62,7 @@ uint16_t adc_buf[BUFFER_SIZE] __attribute__((aligned(4)));
 uint16_t dac_buf[BUFFER_SIZE] __attribute__((aligned(4))); 
 
 uint32_t potValues[3]; 
-uint8_t potTouchedFlags = 0; // Bitfield: bit 0 = pot0, bit 1 = pot1, bit 2 = pot2
+uint8_t potTouchedFlags = 0; // one hot encoded : bit 0 = pot0, bit 1 = pot1, bit 2 = pot2
 Pedal* selectedPedal =  Pedal::createPedal(PedalType::PASS_THROUGH);
 uint8_t page = 0;
 
@@ -100,7 +128,6 @@ void mainApp(void)
 
     while(true)
     {
-        HAL_Delay(100);
     }
       
 
@@ -116,7 +143,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
         switch (GPIO_Pin)
         {
-        case CONTROL_VIEW_B: 
+        case SEL_VIEW_B: 
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
@@ -135,6 +162,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 Display::drawBitmap(base_chain_bitmap, 0, 0);
                 loadedChain.draw();
                 currentView = displayView::PEDALCHAIN_VIEW;
+                updateSelectedPedal(0);
                 break;
             default:
                 break;
@@ -186,9 +214,6 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             
             }
             break;
-        
-
-
 
         case SELECT_PEDAL_2: 
             switch (currentView)
@@ -215,6 +240,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 break;
             }
             break;
+
         case SELECT_PEDAL_3:
             switch (currentView)
             {
@@ -236,34 +262,6 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     }  
 }
 
-static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
-    {
-        .Channel = ADC_CHANNEL_18,
-        .Rank = ADC_REGULAR_RANK_1,
-        .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
-        .SingleDiff = ADC_SINGLE_ENDED,
-        .OffsetNumber = ADC_OFFSET_NONE,
-        .Offset = 0
-    },
-    {
-        .Channel = ADC_CHANNEL_14,
-        .Rank = ADC_REGULAR_RANK_1,
-        .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
-        .SingleDiff = ADC_SINGLE_ENDED,
-        .OffsetNumber = ADC_OFFSET_NONE,
-        .Offset = 0
-    },
-    {
-        .Channel = ADC_CHANNEL_15,
-        .Rank = ADC_REGULAR_RANK_1,
-        .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
-        .SingleDiff = ADC_SINGLE_ENDED,
-        .OffsetNumber = ADC_OFFSET_NONE,
-        .Offset = 0
-    }
-};
-
- 
 
 extern "C"  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
