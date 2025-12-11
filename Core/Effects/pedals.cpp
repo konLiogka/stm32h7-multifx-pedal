@@ -85,15 +85,15 @@ void ReverbPedal::getParams(float* params) const {
 }
 
 void PassThroughPedal::setParams(float* params) {
-    volume = params[0];
-    highs  = params[1];
-    mids   = params[2];
-    lows   = params[3]; 
+    highs  = params[0];
+    mids   = params[1];
+    lows   = params[2]; 
+    volume = params[3];
 }
 
 void PassThroughPedal::getParams(float* params) const {
-    params[0] = volume; 
-    params[1] = highs;   
-    params[2] = mids;   
-    params[3] = lows;  
+    params[0] = highs;   
+    params[1] = mids;   
+    params[2] = lows;  
+    params[3] = volume; 
 }

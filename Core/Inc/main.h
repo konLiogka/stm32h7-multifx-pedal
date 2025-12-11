@@ -20,7 +20,8 @@ extern "C" {
 
     extern DMA_HandleTypeDef hdma_adc1;
 
-    extern DMA_HandleTypeDef hdma_dac;
+    extern DMA_HandleTypeDef hdma_dac1;
+    extern TIM_HandleTypeDef htim6;
 
 
     void Error_Handler(void);

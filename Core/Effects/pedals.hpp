@@ -113,13 +113,18 @@ public:
 class PassThroughPedal : public Pedal {
 public:
     PassThroughPedal() : Pedal(PedalType::PASS_THROUGH) {
+        highs = 0.5f;
+        lows = 0.5f;
+        mids = 0.5f;
+        volume = 0.5f;
+
     }
     
     float highs;
     float mids;
     float lows;
     const uint8_t member_size = 4; 
-    static constexpr const char* memberNames[4] = {"Vol", "Highs", "Mids", "Lows"};
+    static constexpr const char* memberNames[4] = { "Highs", "Mids", "Lows", "Vol"};
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
     
