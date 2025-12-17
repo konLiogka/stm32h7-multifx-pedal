@@ -126,6 +126,7 @@ void mainApp(void)
 
     while (1)
     {
+        __NOP();
     }
 }
 
