@@ -262,6 +262,37 @@ void MX_SPI1_Init(void)
  */
 void MX_GPIO_Init(void)
 {
+  /*
+   * PA0 SELECT VIEW BUTTON 
+   * PA1 PEDAL BUTTON 4
+   * PA2 POT 2
+   * PA3 POT 3
+   * PA4 DAC OUT
+   * PA5 DISPLAY SPI SCK
+   * PA6 PEDAL BUTTON 1
+   * PA7 DISPLAY SPI SDA
+   * PA8 PEDAL 1
+   * PA9 PEDAL 0
+   * PA10 PEDAL BUTTON 3
+   * PA15 PEDAL BUTTON 2
+   * 
+   * PB2 QUADSPI
+   * PB6 QUADSPI
+   * 
+   * PC0 POT 1
+   * PC1 ADC IN
+   * PC4 SETTINGS BUTTON
+   * 
+   * PD2 DISPLAY SPI CS
+   * PD3 DISPLAY SPI RST
+   * PD4 DISPLAY SPI DC
+   * PD11 QUAD SPI
+   * PD12 QUAD SPI
+   * PD13 QUAD SPI
+   * 
+   * PE2 QUADSPI
+  
+  */
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   // Enable GPIO clocks
@@ -284,6 +315,32 @@ void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
+  GPIO_InitStruct.Pin       = GPIO_PIN_2;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;  
+    GPIO_InitStruct.Pull      = GPIO_NOPULL;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    
+    GPIO_InitStruct.Pin       = GPIO_PIN_6;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    
+    GPIO_InitStruct.Pin       = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;  
+    GPIO_InitStruct.Pull      = GPIO_NOPULL;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+    
+    GPIO_InitStruct.Pin       = GPIO_PIN_2;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP; 
+    GPIO_InitStruct.Pull      = GPIO_NOPULL;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
   GPIO_InitStruct.Pin  = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_6 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -302,18 +359,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  // Configure QUADSPI pins
-  // CLK (PB2) and NCS (PB6)
-  GPIO_InitStruct.Pin       = GPIO_PIN_2;
-  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull      = GPIO_NOPULL;
-  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin       = GPIO_PIN_6;
-  GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   GPIO_InitStruct.Pin  = GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -326,11 +371,7 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull  = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  // IO0 (PD11), IO1 (PD12), IO3 (PD13)
-  GPIO_InitStruct.Pin       = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
-  GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+   
 
   // Configure PD1 as input with pull-up
   GPIO_InitStruct.Pin  = GPIO_PIN_1;
@@ -338,10 +379,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  // IO2 (PE2)
-  GPIO_InitStruct.Pin       = GPIO_PIN_2;
-  GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   __enable_irq();
 }
@@ -449,9 +486,9 @@ void MX_DAC1_Init(void)
   }
 
   DAC_ChannelConfTypeDef sConfig = {0};
-  sConfig.DAC_SampleAndHold           = DAC_SAMPLEANDHOLD_DISABLE;
+  sConfig.DAC_SampleAndHold           = DAC_SAMPLEANDHOLD_ENABLE;
   sConfig.DAC_Trigger                 = DAC_TRIGGER_T6_TRGO;
-  sConfig.DAC_OutputBuffer            = DAC_OUTPUTBUFFER_ENABLE;
+  sConfig.DAC_OutputBuffer            = DAC_OUTPUTBUFFER_DISABLE;
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
   sConfig.DAC_UserTrimming            = DAC_TRIMMING_FACTORY;
 
@@ -475,11 +512,10 @@ void MX_DMA_DAC1_Init(void)
   hdma_dac1.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
   hdma_dac1.Init.Mode                = DMA_CIRCULAR;
   hdma_dac1.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
-  hdma_dac1.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
-  hdma_dac1.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-  hdma_dac1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
-  hdma_dac1.Init.MemBurst = DMA_MBURST_INC4;
-  hdma_dac1.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  hdma_dac1.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  hdma_dac1.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  hdma_dac1.Init.MemBurst            = DMA_MBURST_INC4;
+  hdma_dac1.Init.PeriphBurst         = DMA_PBURST_SINGLE;
 
   if (HAL_DMA_Init(&hdma_dac1) != HAL_OK)
   {
