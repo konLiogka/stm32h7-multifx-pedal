@@ -111,6 +111,13 @@ int main(void)
     Display::displayError("ADC2 Calib", err_code);
   }
 
+
+  err_code = HAL_DACEx_SelfCalibrate(&hdac1, DAC_CHANNEL_1, DAC_TRIGGER_NONE);
+  if (err_code != HAL_OK)
+  {
+    Display::displayError("DAC1 Calib", err_code);
+  }
+
   // Start TIM8 with interrupt for ADC2 sampling
   err_code = HAL_TIM_Base_Start_IT(&htim8);
   if (err_code != HAL_OK)
@@ -417,7 +424,7 @@ void MX_DMA_ADC1_Init(void)
   hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
   hdma_adc1.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
   hdma_adc1.Init.Mode                = DMA_CIRCULAR;
-  hdma_adc1.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
+  hdma_adc1.Init.Priority            = DMA_PRIORITY_MEDIUM;
   hdma_adc1.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
 
   if (HAL_DMA_Init(&hdma_adc1) != HAL_OK)
@@ -469,6 +476,10 @@ void MX_DMA_DAC1_Init(void)
   hdma_dac1.Init.Mode                = DMA_CIRCULAR;
   hdma_dac1.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
   hdma_dac1.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
+  hdma_dac1.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+  hdma_dac1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+  hdma_dac1.Init.MemBurst = DMA_MBURST_INC4;
+  hdma_dac1.Init.PeriphBurst = DMA_PBURST_SINGLE;
 
   if (HAL_DMA_Init(&hdma_dac1) != HAL_OK)
   {
@@ -517,7 +528,6 @@ void MX_TIM8_Init(void)
     Display::displayError("TIM8 Init", err_code);
   }
 
-  // Enable timer interrupt
   HAL_NVIC_SetPriority(TIM8_UP_TIM13_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
 }
@@ -527,33 +537,43 @@ static void MPU_Config(void)
   MPU_Region_InitTypeDef MPU_InitStruct = {0};
 
   HAL_MPU_Disable();
-
-  MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number           = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress      = 0x0;
-  MPU_InitStruct.Size             = MPU_REGION_SIZE_4GB;
-  MPU_InitStruct.SubRegionDisable = 0x87;
-  MPU_InitStruct.TypeExtField     = MPU_TEX_LEVEL0;
+  
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+  MPU_InitStruct.BaseAddress = 0x00000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
+  MPU_InitStruct.SubRegionDisable = 0x87;  
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
   MPU_InitStruct.AccessPermission = MPU_REGION_NO_ACCESS;
-  MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_DISABLE;
-  MPU_InitStruct.IsShareable      = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable      = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable     = MPU_ACCESS_NOT_BUFFERABLE;
-
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+  
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-
-  MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number           = MPU_REGION_NUMBER1;
-  MPU_InitStruct.BaseAddress      = 0x30040000;                 // D3 SRAM3
-  MPU_InitStruct.Size             = MPU_REGION_SIZE_128KB;
-  MPU_InitStruct.TypeExtField     = MPU_TEX_LEVEL1;
+  
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER1;  
+  MPU_InitStruct.BaseAddress = 0x30040000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
+  MPU_InitStruct.SubRegionDisable = 0x00;   
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL2;   
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.IsShareable      = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable      = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable     = MPU_ACCESS_NOT_BUFFERABLE;
-
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;   
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;   
+  
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  
+  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+  __DMB();
+  
+  SCB_DisableICache();
+  SCB_DisableDCache();
+  
+  SCB_InvalidateDCache();
+  SCB_CleanDCache();
 }
 
 extern "C" void DMA1_Stream0_IRQHandler(void)

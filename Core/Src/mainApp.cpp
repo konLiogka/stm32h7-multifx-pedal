@@ -10,6 +10,7 @@
 #include "modPedal.hpp"
 #include "qspi_flash.hpp"
 #include <cstdio>
+#include <cstring>
 
 #define THRESHOLD 4
 #define SEL_VIEW_B GPIO_PIN_0
@@ -119,6 +120,16 @@ void mainApp(void)
     updateSelectedPedal(loadedChain.selectedPedal);
     currentView = displayView::PEDALCHAIN_VIEW;
 
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+        adc_buf[i] = 2048;
+        dac_buf[i] = 2048;
+    }
+
+    __DSB();
+    __ISB();
+    SCB_CleanDCache_by_Addr((uint32_t *)dac_buf, BUFFER_SIZE * sizeof(uint16_t));
+
     HAL_ADC_Start_DMA(&hadc1, reinterpret_cast<uint32_t *>(adc_buf), BUFFER_SIZE);
     HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, reinterpret_cast<uint32_t *>(dac_buf), BUFFER_SIZE, DAC_ALIGN_12B_R);
 
@@ -134,14 +145,9 @@ extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        SCB_InvalidateDCache_by_Addr((uint32_t *)adc_buf, HALF_BUFFER_SIZE * sizeof(uint16_t));
 
-        for (int i = 0; i < HALF_BUFFER_SIZE; i++)
-        {
-            dac_buf[i] = adc_buf[i];
-        }
+        memcpy(dac_buf, adc_buf, HALF_BUFFER_SIZE * sizeof(uint16_t));
 
-        SCB_CleanDCache_by_Addr((uint32_t *)dac_buf, HALF_BUFFER_SIZE * sizeof(uint16_t));
     }
 }
 
@@ -149,14 +155,9 @@ extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        SCB_InvalidateDCache_by_Addr((uint32_t *)(adc_buf + HALF_BUFFER_SIZE), HALF_BUFFER_SIZE * sizeof(uint16_t));
 
-        for (int i = 0; i < HALF_BUFFER_SIZE; i++)
-        {
-            dac_buf[HALF_BUFFER_SIZE + i] = adc_buf[HALF_BUFFER_SIZE + i];
-        }
+        memcpy(dac_buf + HALF_BUFFER_SIZE, adc_buf + HALF_BUFFER_SIZE, HALF_BUFFER_SIZE * sizeof(uint16_t));
 
-        SCB_CleanDCache_by_Addr((uint32_t *)(dac_buf + HALF_BUFFER_SIZE), HALF_BUFFER_SIZE * sizeof(uint16_t));
     }
 }
 
