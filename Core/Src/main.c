@@ -22,6 +22,10 @@ SPI_HandleTypeDef hspi1;
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
+/* Initialize ADC2 handler */
+ADC_HandleTypeDef hadc2;
+DMA_HandleTypeDef hdma_adc2;
+
 /* Initialize DAC handler */
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1;
@@ -30,9 +34,6 @@ DMA_HandleTypeDef hdma_dac1;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim8;
 
-/* Initialize ADC2 handler */
-ADC_HandleTypeDef hadc2;
-DMA_HandleTypeDef hdma_adc2;
 uint8_t err_code = 0;
 
 void showStartupScreen()
@@ -74,7 +75,6 @@ void showStartupScreen()
 int main(void)
 {
 
-  /* Initialize main peripherals */
   HAL_Init();
   SystemClock_Config();
   __HAL_RCC_SYSCFG_CLK_ENABLE();
@@ -87,12 +87,12 @@ int main(void)
 
   showStartupScreen();
 
-  HAL_Delay(3000);
+  HAL_Delay(100);
 
-  // Initialize ADCs
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_DAC1_Init();
+
   MX_TIM8_Init();
   MX_TIM6_Init();
 
@@ -111,14 +111,12 @@ int main(void)
     Display::displayError("ADC2 Calib", err_code);
   }
 
-
   err_code = HAL_DACEx_SelfCalibrate(&hdac1, DAC_CHANNEL_1, DAC_TRIGGER_NONE);
   if (err_code != HAL_OK)
   {
     Display::displayError("DAC1 Calib", err_code);
   }
 
-  // Start TIM8 with interrupt for ADC2 sampling
   err_code = HAL_TIM_Base_Start_IT(&htim8);
   if (err_code != HAL_OK)
   {
@@ -193,12 +191,9 @@ void SystemClock_Config(void)
     Display::displayError("RCC Clock", 1);
   }
 
-  // Configure PLL2 for MAX ADC performance
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
   PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
 
-  // MAX ADC clock for 12-bit mode = ~60 MHz
-  // Set PLL2 for 60 MHz ADC clock
   PeriphClkInit.PLL2.PLL2M      = 5;                   // 25 MHz / 5 = 5 MHz
   PeriphClkInit.PLL2.PLL2N      = 96;                  // 5 MHz × 96 = 480 MHz (VCO)
   PeriphClkInit.PLL2.PLL2P      = 8;                   // 480 MHz / 8 = 60 MHz (MAX for 12-bit ADC)
@@ -231,8 +226,8 @@ void MX_SPI1_Init(void)
   hspi1.Init.Mode                    = SPI_MODE_MASTER;
   hspi1.Init.Direction               = SPI_DIRECTION_2LINES_TXONLY;
   hspi1.Init.DataSize                = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity             = SPI_POLARITY_LOW;                       // CPOL = 0
-  hspi1.Init.CLKPhase                = SPI_PHASE_1EDGE;                        // CPHA = 0
+  hspi1.Init.CLKPolarity             = SPI_POLARITY_LOW;                 
+  hspi1.Init.CLKPhase                = SPI_PHASE_1EDGE;                  
   hspi1.Init.NSS                     = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler       = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit                = SPI_FIRSTBIT_MSB;
@@ -316,37 +311,36 @@ void MX_GPIO_Init(void)
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   GPIO_InitStruct.Pin       = GPIO_PIN_2;
-    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;  
-    GPIO_InitStruct.Pull      = GPIO_NOPULL;
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    
-    GPIO_InitStruct.Pin       = GPIO_PIN_6;
-    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    
-    GPIO_InitStruct.Pin       = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
-    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;  
-    GPIO_InitStruct.Pull      = GPIO_NOPULL;
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-    
-    GPIO_InitStruct.Pin       = GPIO_PIN_2;
-    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP; 
-    GPIO_InitStruct.Pull      = GPIO_NOPULL;
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;  
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  
+  GPIO_InitStruct.Pin       = GPIO_PIN_6;
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  
+  GPIO_InitStruct.Pin       = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;  
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  
+  GPIO_InitStruct.Pin       = GPIO_PIN_2;
+  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP; 
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   GPIO_InitStruct.Pin  = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_6 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  // Configure SPI1 pins (PA5=SCK, PA7=MOSI) with strong drive
   GPIO_InitStruct.Pin       = GPIO_PIN_5 | GPIO_PIN_7;
   GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull      = GPIO_NOPULL;
@@ -365,7 +359,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  // Configure display control pins (CS=PD2, RES=PD3, DC=PD4)
   GPIO_InitStruct.Pin   = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4;
   GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull  = GPIO_NOPULL;
@@ -373,7 +366,6 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
    
 
-  // Configure PD1 as input with pull-up
   GPIO_InitStruct.Pin  = GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -385,7 +377,6 @@ void MX_GPIO_Init(void)
 
 void MX_ADC2_Init(void)
 {
-  // ADC2 Configuration for polling mode
   hadc2.Instance = ADC2;
   hadc2.Init.ClockPrescaler           = ADC_CLOCK_ASYNC_DIV4;
   hadc2.Init.Resolution               = ADC_RESOLUTION_8B;
@@ -436,7 +427,7 @@ void MX_ADC1_Init(void)
     Display::displayError("ADC1 Init", 1);
   }
 
-  sConfig.Channel      = ADC_CHANNEL_11;            // PC1
+  sConfig.Channel      = ADC_CHANNEL_11;         
   sConfig.Rank         = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;
   sConfig.SingleDiff   = ADC_SINGLE_ENDED;
@@ -529,8 +520,8 @@ void MX_DMA_DAC1_Init(void)
 void MX_TIM6_Init(void)
 {
   htim6.Instance               = TIM6;
-  htim6.Init.Prescaler         = 0;
-  htim6.Init.Period            = 2499;
+  htim6.Init.Prescaler         = 0;                              // 200MHz 
+  htim6.Init.Period            = 2499;                           // 200M / 2499 = 96kHz
   htim6.Init.CounterMode       = TIM_COUNTERMODE_UP;
   htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
@@ -550,7 +541,7 @@ void MX_TIM6_Init(void)
 void MX_TIM8_Init(void)
 {
   htim8.Instance               = TIM8;
-  htim8.Init.Prescaler         = 39999;                           // 200MHz / 40000 = 5kHz (APB2 timer clock is 200MHz)
+  htim8.Init.Prescaler         = 39999;                           // 200MHz / 40000 = 5kHz 
   htim8.Init.Period            = 499;                             // 5kHz / 500 = 10Hz (100ms period)
   htim8.Init.CounterMode       = TIM_COUNTERMODE_UP;
   htim8.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
@@ -574,31 +565,31 @@ static void MPU_Config(void)
 
   HAL_MPU_Disable();
   
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress = 0x00000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
-  MPU_InitStruct.SubRegionDisable = 0x87;  
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+  MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number           = MPU_REGION_NUMBER0;
+  MPU_InitStruct.BaseAddress      = 0x00000000;
+  MPU_InitStruct.Size             = MPU_REGION_SIZE_4GB;
+  MPU_InitStruct.SubRegionDisable = 0x87;
+  MPU_InitStruct.TypeExtField     = MPU_TEX_LEVEL0;
   MPU_InitStruct.AccessPermission = MPU_REGION_NO_ACCESS;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+  MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_DISABLE;
+  MPU_InitStruct.IsShareable      = MPU_ACCESS_SHAREABLE;
+  MPU_InitStruct.IsCacheable      = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsBufferable     = MPU_ACCESS_NOT_BUFFERABLE;
   
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER1;  
-  MPU_InitStruct.BaseAddress = 0x30040000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
-  MPU_InitStruct.SubRegionDisable = 0x00;   
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL2;   
+  MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number           = MPU_REGION_NUMBER1;
+  MPU_InitStruct.BaseAddress      = 0x30040000;
+  MPU_InitStruct.Size             = MPU_REGION_SIZE_128KB;
+  MPU_InitStruct.SubRegionDisable = 0x00;
+  MPU_InitStruct.TypeExtField     = MPU_TEX_LEVEL2;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;   
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;   
+  MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable      = MPU_ACCESS_SHAREABLE;
+  MPU_InitStruct.IsCacheable      = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsBufferable     = MPU_ACCESS_BUFFERABLE;
   
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   

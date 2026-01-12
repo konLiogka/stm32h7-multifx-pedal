@@ -89,27 +89,25 @@ void mainApp(void)
         Error_Handler();
     }
 
-    EffectsChain chain;
-    chain.setPedal(0, PedalType::OVERDRIVE_DISTORTION);
-    chain.setPedal(1, PedalType::REVERB);
-    chain.setPedal(2, PedalType::ECHO);
-    chain.setPedal(3, PedalType::PASS_THROUGH);
-
-    if (QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK)
-    {
-        Display::displayError("QSPI erase Flash", QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR));
-        Error_Handler();
-    }
-
-    if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK)
-    {
-        Display::displayError("QSPI save Flash", QSPIFlash::saveEffectsChain(&chain));
-        Error_Handler();
-    }
-
-    loadedChain.clear();
     if (QSPIFlash::loadEffectsChain(&loadedChain) != HAL_OK)
     {
+        EffectsChain chain;
+        chain.setPedal(0, PedalType::OVERDRIVE_DISTORTION);
+        chain.setPedal(1, PedalType::REVERB);
+        chain.setPedal(2, PedalType::ECHO);
+        chain.setPedal(3, PedalType::PASS_THROUGH);
+
+        if (QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK)
+        {
+            Display::displayError("QSPI erase Flash", QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR));
+            Error_Handler();
+        }
+
+        if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK)
+        {
+            Display::displayError("QSPI save Flash", QSPIFlash::saveEffectsChain(&chain));
+            Error_Handler();
+        }
         Display::displayError("QSPI load Flash", QSPIFlash::loadEffectsChain(&loadedChain));
         Error_Handler();
     }
