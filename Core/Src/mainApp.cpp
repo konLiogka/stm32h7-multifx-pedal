@@ -317,9 +317,8 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
             if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK)
             {
-                uint32_t rawValue = 4095 - HAL_ADC_GetValue(&hadc2); // Invert the 12-bit value
-
-                uint32_t normalized_value = (((rawValue * 20) >> 12) * 5) + 5;
+                uint32_t rawValue = 255 - HAL_ADC_GetValue(&hadc2); // Invert 8-bit value
+                uint32_t normalized_value = (((rawValue * 20) >> 8) * 5) + 5;
 
                 if (normalized_value > 100)
                     normalized_value = 100;

@@ -380,18 +380,19 @@ void MX_GPIO_Init(void)
 
 void MX_ADC2_Init(void)
 {
-  hadc2.Instance = ADC2;
+
+  hadc2.Instance                      = ADC2;
   hadc2.Init.ClockPrescaler           = ADC_CLOCK_ASYNC_DIV4;
   hadc2.Init.Resolution               = ADC_RESOLUTION_8B;
   hadc2.Init.ScanConvMode             = DISABLE;                        
   hadc2.Init.EOCSelection             = ADC_EOC_SINGLE_CONV;
   hadc2.Init.LowPowerAutoWait         = DISABLE;
-  hadc2.Init.ContinuousConvMode       = ENABLE;                         
+  hadc2.Init.ContinuousConvMode       = DISABLE;                     
   hadc2.Init.NbrOfConversion          = 1;                            
   hadc2.Init.DiscontinuousConvMode    = DISABLE;
-  hadc2.Init.ExternalTrigConv         = ADC_SOFTWARE_START;              
+  hadc2.Init.ExternalTrigConv         = ADC_SOFTWARE_START;             
   hadc2.Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;          
+  hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;           
   hadc2.Init.Overrun                  = ADC_OVR_DATA_OVERWRITTEN;
   hadc2.Init.OversamplingMode         = DISABLE;
 
