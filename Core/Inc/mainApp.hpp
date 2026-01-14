@@ -9,6 +9,7 @@
 extern SPI_HandleTypeDef hspi1;
 extern QSPI_HandleTypeDef qhspi;
 extern TIM_HandleTypeDef htim6;
+extern uint8_t err_code;
 
 
 void mainApp(void);

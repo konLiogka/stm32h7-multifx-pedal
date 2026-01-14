@@ -26,21 +26,23 @@ For SSD1309 OLED 128x64 display
 extern SPI_HandleTypeDef hspi1;
 
 namespace Display {
-    void init();
-    void setBrightness(uint8_t level);
-    void writeCommand(uint8_t cmd);
-    void writeData(uint8_t* data, uint16_t size);
-    void reset();
-    void setCursor(uint8_t column, uint8_t page);
-    void drawChar(char c, uint8_t x, uint8_t page);
-    void drawString(const char* str, uint8_t x, uint8_t page);
-    void drawDigit(uint8_t digit, uint8_t x, uint8_t page);
-    void drawFloat(float value, uint8_t x, uint8_t page);
-    void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart);
-    void clear(void);
-    void displayError(const char* area, uint8_t errorCode);
-    void printf(uint8_t x, uint8_t page, const char* format, ...);
-    extern uint8_t frameBuffer[FULL_SCREEN];
+        void init();
+        void setBrightness(uint8_t level);
+        void writeCommand(uint8_t cmd);
+        void writeData(uint8_t* data, uint16_t size);
+        void reset();
+        void setCursor(uint8_t column, uint8_t page);
+        void drawChar(char c, uint8_t x, uint8_t page);
+        void drawString(const char* str, uint8_t x, uint8_t page);
+        void drawDigit(uint8_t digit, uint8_t x, uint8_t page);
+        void drawFloat(float value, uint8_t x, uint8_t page);
+        void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart);
+        void clear(void);
+
+        void printf(const char* format, ...) ;
+        void printf(uint8_t x, uint8_t page, const char* format, ...);
+
+        extern uint8_t frameBuffer[FULL_SCREEN];
 }
 
 #endif /* INC_DISPLAY_HPP_ */

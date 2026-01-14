@@ -102,25 +102,25 @@ int main(void)
   err_code = HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
   if (err_code != HAL_OK)
   {
-    Display::displayError("ADC1 Calib", err_code);
+    Display::printf("ADC1 Calib: %d", err_code);
   }
 
   err_code = HAL_ADCEx_Calibration_Start(&hadc2, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
   if (err_code != HAL_OK)
   {
-    Display::displayError("ADC2 Calib", err_code);
+    Display::printf("ADC2 Calib: %d", err_code);
   }
 
   err_code = HAL_DACEx_SelfCalibrate(&hdac1, DAC_CHANNEL_1, DAC_TRIGGER_NONE);
   if (err_code != HAL_OK)
   {
-    Display::displayError("DAC1 Calib", err_code);
+    Display::printf("DAC1 Calib: %d", err_code);
   }
 
   err_code = HAL_TIM_Base_Start_IT(&htim8);
   if (err_code != HAL_OK)
   {
-    Display::displayError("TIM8 Start", err_code);
+    Display::printf("TIM8 Start: %d", err_code);
   }
 
   MPU_Config();
@@ -165,9 +165,10 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;     // Wide VCO
   RCC_OscInitStruct.PLL.PLLFRACN  = 0;
 
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  err_code = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("RCC OSC", 1);
+    Display::printf("RCC OSC: %d", err_code);
   }
 
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
@@ -186,9 +187,10 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2; // APB4 = 120 MHz
 
   // Flash latency for 480 MHz (VOS0) = 5 wait states
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  err_code = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("RCC Clock", 1);
+    Display::printf("RCC Clock: %d", err_code);
   }
 
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
@@ -203,9 +205,10 @@ void SystemClock_Config(void)
   PeriphClkInit.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
   PeriphClkInit.PLL2.PLL2FRACN  = 0;
 
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  err_code = HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("ADC Clock", 1);
+    Display::printf("ADC Clock", 1);
   }
 
   SCB_EnableICache();
@@ -246,7 +249,7 @@ void MX_SPI1_Init(void)
   err_code = HAL_SPI_Init(&hspi1);
   if (err_code != HAL_OK)
   {
-    Display::displayError("SPI1 Init", err_code);
+    Display::printf("SPI1 Init: %d", err_code);
   }
 }
 
@@ -396,7 +399,7 @@ void MX_ADC2_Init(void)
   err_code = HAL_ADC_Init(&hadc2);
   if (err_code != HAL_OK)
   {
-    Display::displayError("ADC2 Init", err_code);
+    Display::printf("ADC2 Init: %d", err_code);
     return;
   }
 }
@@ -422,9 +425,10 @@ void MX_ADC1_Init(void)
 
   __HAL_RCC_ADC12_CLK_ENABLE();
 
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  err_code = HAL_ADC_Init(&hadc1);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("ADC1 Init", 1);
+    Display::printf("ADC1 Init: %d", err_code);
   }
 
   sConfig.Channel      = ADC_CHANNEL_11;         
@@ -434,9 +438,10 @@ void MX_ADC1_Init(void)
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
 
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  err_code = HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("ADC1 CH0", 1);
+    Display::printf("ADC1 CH0: %d", err_code);
   }
 }
 
@@ -452,12 +457,14 @@ void MX_DMA_ADC1_Init(void)
   hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
   hdma_adc1.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
   hdma_adc1.Init.Mode                = DMA_CIRCULAR;
-  hdma_adc1.Init.Priority            = DMA_PRIORITY_MEDIUM;
+  hdma_adc1.Init.Priority            = DMA_PRIORITY_HIGH;
   hdma_adc1.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
 
-  if (HAL_DMA_Init(&hdma_adc1) != HAL_OK)
+  err_code = HAL_DMA_Init(&hdma_adc1);
+
+  if (err_code != HAL_OK)
   {
-    Display::displayError("DMA ADC1 Init", 1);
+    Display::printf("DMA ADC1 Init: %d", err_code);
   }
 
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 1, 0);
@@ -470,9 +477,10 @@ void MX_DAC1_Init(void)
   __HAL_RCC_DAC12_CLK_ENABLE();
 
   hdac1.Instance = DAC1;
-  if (HAL_DAC_Init(&hdac1) != HAL_OK)
+  err_code = HAL_DAC_Init(&hdac1);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("DAC Init", HAL_ERROR);
+    Display::printf("DAC Init: %d", err_code);
     Error_Handler();
   }
 
@@ -483,9 +491,10 @@ void MX_DAC1_Init(void)
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
   sConfig.DAC_UserTrimming            = DAC_TRIMMING_FACTORY;
 
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+  err_code = HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("DAC Chan", HAL_ERROR);
+    Display::printf("DAC Chan: %d", err_code);
     Error_Handler();
   }
 }
@@ -508,9 +517,10 @@ void MX_DMA_DAC1_Init(void)
   hdma_dac1.Init.MemBurst            = DMA_MBURST_INC4;
   hdma_dac1.Init.PeriphBurst         = DMA_PBURST_SINGLE;
 
-  if (HAL_DMA_Init(&hdma_dac1) != HAL_OK)
+  err_code = HAL_DMA_Init(&hdma_dac1) ;
+  if (err_code != HAL_OK)
   {
-    Display::displayError("DMA DAC1 Init", 1);
+    Display::printf("DMA DAC1 Init: %d", err_code);
   }
   HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
@@ -527,9 +537,10 @@ void MX_TIM6_Init(void)
 
   __HAL_RCC_TIM6_CLK_ENABLE();
 
-  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  err_code = HAL_TIM_Base_Init(&htim6);
+  if (err_code != HAL_OK)
   {
-    Display::displayError("TIM6 Init", 1);
+    Display::printf("TIM6 Init: %d", err_code);
   }
 
   TIM_MasterConfigTypeDef sMasterConfig                     = {0};
@@ -552,7 +563,7 @@ void MX_TIM8_Init(void)
   err_code = HAL_TIM_Base_Init(&htim8);
   if (err_code != HAL_OK)
   {
-    Display::displayError("TIM8 Init", err_code);
+    Display::printf("TIM8 Init: %d", err_code);
   }
 
   HAL_NVIC_SetPriority(TIM8_UP_TIM13_IRQn, 6, 0);

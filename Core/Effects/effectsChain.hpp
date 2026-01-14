@@ -12,8 +12,8 @@ public:
 
     uint8_t selectedPedal = 0;
     
-    void setPedal(int index, PedalType type);
-    Pedal* getPedal(int index) const;
+    void setPedal(uint8_t index, PedalType type);
+    Pedal* getPedal(uint8_t index) const;
     void draw() const;
     void clear();
 

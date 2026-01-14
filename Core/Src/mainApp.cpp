@@ -82,33 +82,35 @@ void mainApp(void)
 {
     Display::init();
     Display::clear();
-
-    if (QSPIFlash::init() != HAL_OK)
+    err_code = QSPIFlash::init();
+    if (err_code != HAL_OK)
     {
-        Display::displayError("QSPI Flash", QSPIFlash::init());
+        Display::printf("QSPI Flash: %d", err_code );
         Error_Handler();
     }
-
-    if (QSPIFlash::loadEffectsChain(&loadedChain) != HAL_OK)
+    err_code = QSPIFlash::loadEffectsChain(&loadedChain);
+    if (err_code != HAL_OK)
     {
         EffectsChain chain;
-        chain.setPedal(0, PedalType::OVERDRIVE_DISTORTION);
-        chain.setPedal(1, PedalType::REVERB);
-        chain.setPedal(2, PedalType::ECHO);
+        chain.setPedal(0, PedalType::PASS_THROUGH);
+        chain.setPedal(1, PedalType::PASS_THROUGH);
+        chain.setPedal(2, PedalType::PASS_THROUGH);
         chain.setPedal(3, PedalType::PASS_THROUGH);
 
-        if (QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK)
+        err_code = QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR);
+        if (err_code != HAL_OK)
         {
-            Display::displayError("QSPI erase Flash", QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR));
+            Display::printf("QSPI erase Flash: %d", err_code);
             Error_Handler();
         }
 
-        if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK)
+        err_code = QSPIFlash::saveEffectsChain(&chain);
+        if (err_code!= HAL_OK)
         {
-            Display::displayError("QSPI save Flash", QSPIFlash::saveEffectsChain(&chain));
+            Display::printf("QSPI save Flash: %d", err_code);
             Error_Handler();
         }
-        Display::displayError("QSPI load Flash", QSPIFlash::loadEffectsChain(&loadedChain));
+        Display::printf("QSPI load Flash %d", err_code);
         Error_Handler();
     }
 

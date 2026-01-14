@@ -10,9 +10,123 @@
 #include <cstdio>
 #include <cstring>
 
+void pprintf(uint8_t x, uint8_t page, const char* format, va_list args) {
+    
+    uint8_t currentX = x;
+    const char* ptr = format;
+    char buffer[16]; 
+    
+    while (*ptr && currentX < DISPLAY_WIDTH) {
+        if (*ptr == '%' && *(ptr + 1)) {
+            ptr++; // Skip '%'
+            
+            switch (*ptr) {
+                case 'd': { // Decimal integer
+                    int value = va_arg(args, int);
+                    snprintf(buffer, sizeof(buffer), "%d", value);
+                    Display::drawString(buffer, currentX, page);
+                    currentX += strlen(buffer) * 6;
+                    break;
+                }
+                case 'u': { // Unsigned integer
+                    unsigned int value = va_arg(args, unsigned int);
+                    snprintf(buffer, sizeof(buffer), "%u", value);
+                    Display::drawString(buffer, currentX, page);
+                    currentX += strlen(buffer) * 6;
+                    break;
+                }
+                case 'x': { // Hexadecimal lowercase
+                    unsigned int value = va_arg(args, unsigned int);
+                    snprintf(buffer, sizeof(buffer), "%x", value);
+                    Display::drawString(buffer, currentX, page);
+                    currentX += strlen(buffer) * 6;
+                    break;
+                }
+                case 'X': { // Hexadecimal uppercase
+                    unsigned int value = va_arg(args, unsigned int);
+                    snprintf(buffer, sizeof(buffer), "%X", value);
+                    Display::drawString(buffer, currentX, page);
+                    currentX += strlen(buffer) * 6;
+                    break;
+                }
+                case 'b': // Binary 
+                case 'B': {
+                    unsigned int value = va_arg(args, unsigned int);
+                    // Convert to binary string
+                    char binStr[33] = {0}; // 32 bits + null terminator
+                    int index = 0;
+                    if (value == 0) {
+                        binStr[0] = '0';
+                        index = 1;
+                    } else {
+                        unsigned int temp = value;
+                        int bitPos = 0;
+                        while (temp > 0) {
+                            temp >>= 1;
+                            bitPos++;
+                        }
+                        for (int i = bitPos - 1; i >= 0; i--) {
+                            binStr[index++] = ((value >> i) & 1) ? '1' : '0';
+                        }
+                    }
+                    binStr[index] = '\0';
+                    Display::drawString(binStr, currentX, page);
+                    currentX += strlen(binStr) * 6;
+                    break;
+                }
+                case 'f': { // Float
+                    double value = va_arg(args, double);
+                    Display::drawFloat((float)value, currentX, page);
+                    int intPart = (int)value;
+                    int digits = (intPart == 0) ? 1 : 0;
+                    int temp = (intPart < 0) ? -intPart : intPart;
+                    while (temp > 0) {
+                        digits++;
+                        temp /= 10;
+                    }
+                    currentX += (digits + 3) * 6; // digits + '.' + 2 decimal places
+                    break;
+                }
+                case 'c': { // Character
+                    char value = (char)va_arg(args, int);
+                    Display::drawChar(value, currentX, page);
+                    currentX += 6;
+                    break;
+                }
+                case 's': { // String
+                    const char* value = va_arg(args, const char*);
+                    Display::drawString(value, currentX, page);
+                    currentX += strlen(value) * 6;
+                    break;
+                }
+                case '%': { // Literal '%'
+                    Display::drawChar('%', currentX, page);
+                    currentX += 6;
+                    break;
+                }
+                default:
+                    // Unknown format specifier, just draw it as is
+                    Display::drawChar('%', currentX, page);
+                    currentX += 6;
+                    if (currentX < DISPLAY_WIDTH) {
+                        Display::drawChar(*ptr, currentX, page);
+                        currentX += 6;
+                    }
+                    break;
+            }
+        } else {
+
+            Display::drawChar(*ptr, currentX, page);
+            currentX += 6;
+        }
+        ptr++;
+    }
+    va_end(args);
+}
+
+
 
 namespace Display {
-
 void writeCommand(uint8_t cmd) {
     HAL_GPIO_WritePin(OLED_DC_Port, OLED_DC_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(OLED_CS_Port, OLED_CS_Pin, GPIO_PIN_RESET);
@@ -160,132 +274,18 @@ void drawBitmap(const Bitmap& bmp, uint8_t x, uint8_t pageStart) {
     }
 }
 
-void displayError(const char* area, uint8_t errorCode) {
-    clear();
-    drawString("Error:", 0, 0);
-    drawString(area, 0, 1);
-    drawString("Code:", 0, 2);
-    drawDigit(errorCode, 30, 2);
+void printf(const char* format, ...) 
+{
+        va_list args;
+        va_start(args, format);
+        pprintf(10, 5, format, args);
+        va_end(args);
 }
 
 void printf(uint8_t x, uint8_t page, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    
-    uint8_t currentX = x;
-    const char* ptr = format;
-    char buffer[16]; 
-    
-    while (*ptr && currentX < DISPLAY_WIDTH) {
-        if (*ptr == '%' && *(ptr + 1)) {
-            ptr++; // Skip '%'
-            
-            switch (*ptr) {
-                case 'd': { // Decimal integer
-                    int value = va_arg(args, int);
-                    snprintf(buffer, sizeof(buffer), "%d", value);
-                    drawString(buffer, currentX, page);
-                    currentX += strlen(buffer) * 6;
-                    break;
-                }
-                case 'u': { // Unsigned integer
-                    unsigned int value = va_arg(args, unsigned int);
-                    snprintf(buffer, sizeof(buffer), "%u", value);
-                    drawString(buffer, currentX, page);
-                    currentX += strlen(buffer) * 6;
-                    break;
-                }
-                case 'x': { // Hexadecimal lowercase
-                    unsigned int value = va_arg(args, unsigned int);
-                    snprintf(buffer, sizeof(buffer), "%x", value);
-                    drawString(buffer, currentX, page);
-                    currentX += strlen(buffer) * 6;
-                    break;
-                }
-                case 'X': { // Hexadecimal uppercase
-                    unsigned int value = va_arg(args, unsigned int);
-                    snprintf(buffer, sizeof(buffer), "%X", value);
-                    drawString(buffer, currentX, page);
-                    currentX += strlen(buffer) * 6;
-                    break;
-                }
-                case 'b': // Binary (custom implementation)
-                case 'B': {
-                    unsigned int value = va_arg(args, unsigned int);
-                    // Convert to binary string
-                    char binStr[33] = {0}; // 32 bits + null terminator
-                    int index = 0;
-                    if (value == 0) {
-                        binStr[0] = '0';
-                        index = 1;
-                    } else {
-                        // Find the highest bit position
-                        unsigned int temp = value;
-                        int bitPos = 0;
-                        while (temp > 0) {
-                            temp >>= 1;
-                            bitPos++;
-                        }
-                        // Build binary string
-                        for (int i = bitPos - 1; i >= 0; i--) {
-                            binStr[index++] = ((value >> i) & 1) ? '1' : '0';
-                        }
-                    }
-                    binStr[index] = '\0';
-                    drawString(binStr, currentX, page);
-                    currentX += strlen(binStr) * 6;
-                    break;
-                }
-                case 'f': { // Float
-                    double value = va_arg(args, double);
-                    drawFloat((float)value, currentX, page);
-                    // Estimate float display width (integer + decimal point + 2 decimal places)
-                    int intPart = (int)value;
-                    int digits = (intPart == 0) ? 1 : 0;
-                    int temp = (intPart < 0) ? -intPart : intPart;
-                    while (temp > 0) {
-                        digits++;
-                        temp /= 10;
-                    }
-                    currentX += (digits + 3) * 6; // digits + '.' + 2 decimal places
-                    break;
-                }
-                case 'c': { // Character
-                    char value = (char)va_arg(args, int);
-                    drawChar(value, currentX, page);
-                    currentX += 6;
-                    break;
-                }
-                case 's': { // String
-                    const char* value = va_arg(args, const char*);
-                    drawString(value, currentX, page);
-                    currentX += strlen(value) * 6;
-                    break;
-                }
-                case '%': { // Literal '%'
-                    drawChar('%', currentX, page);
-                    currentX += 6;
-                    break;
-                }
-                default:
-                    // Unknown format specifier, just draw it as is
-                    drawChar('%', currentX, page);
-                    currentX += 6;
-                    if (currentX < DISPLAY_WIDTH) {
-                        drawChar(*ptr, currentX, page);
-                        currentX += 6;
-                    }
-                    break;
-            }
-        } else {
-            // Regular character
-            drawChar(*ptr, currentX, page);
-            currentX += 6;
-        }
-        ptr++;
-    }
-    
+    pprintf(x, page, format, args);
     va_end(args);
 }
-
 }

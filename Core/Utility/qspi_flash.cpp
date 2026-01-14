@@ -24,16 +24,16 @@ namespace QSPIFlash {
         QSPI_CommandTypeDef cmd = {0};
         uint8_t status;
         
-        cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        cmd.Instruction = W25Q64_READ_STATUS_REG;
-        cmd.AddressMode = QSPI_ADDRESS_NONE;
+        cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+        cmd.Instruction       = W25Q64_READ_STATUS_REG;
+        cmd.AddressMode       = QSPI_ADDRESS_NONE;
         cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-        cmd.DataMode = QSPI_DATA_1_LINE;
-        cmd.DummyCycles = 0;
-        cmd.NbData = 1;
-        cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-        cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-        cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        cmd.DataMode          = QSPI_DATA_1_LINE;
+        cmd.DummyCycles       = 0;
+        cmd.NbData            = 1;
+        cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
+        cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+        cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
         
         while (HAL_GetTick() - start_time < timeout) {
             if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
@@ -57,15 +57,15 @@ namespace QSPIFlash {
     static HAL_StatusTypeDef write_enable() {
         QSPI_CommandTypeDef cmd = {0};
         
-        cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        cmd.Instruction = W25Q64_WRITE_ENABLE;
-        cmd.AddressMode = QSPI_ADDRESS_NONE;
+        cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+        cmd.Instruction       = W25Q64_WRITE_ENABLE;
+        cmd.AddressMode       = QSPI_ADDRESS_NONE;
         cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-        cmd.DataMode = QSPI_DATA_NONE;
-        cmd.DummyCycles = 0;
-        cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-        cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-        cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        cmd.DataMode          = QSPI_DATA_NONE;
+        cmd.DummyCycles       = 0;
+        cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
+        cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+        cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
@@ -74,15 +74,15 @@ namespace QSPIFlash {
     }
 
     HAL_StatusTypeDef init() {
-        hqspi.Instance = QUADSPI;
-        hqspi.Init.ClockPrescaler = 2;
-        hqspi.Init.FifoThreshold = 4;
-        hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
-        hqspi.Init.FlashSize = 22;  // 2^(22+1) = 8MB
+        hqspi.Instance                = QUADSPI;
+        hqspi.Init.ClockPrescaler     = 2;
+        hqspi.Init.FifoThreshold      = 4;
+        hqspi.Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
+        hqspi.Init.FlashSize          = 22;                              // 2^(22+1) = 8MB
         hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-        hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
-        hqspi.Init.FlashID = QSPI_FLASH_ID_1;
-        hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+        hqspi.Init.ClockMode          = QSPI_CLOCK_MODE_0;
+        hqspi.Init.FlashID            = QSPI_FLASH_ID_1;
+        hqspi.Init.DualFlash          = QSPI_DUALFLASH_DISABLE;
         
         __HAL_RCC_QSPI_CLK_ENABLE();
         
@@ -93,16 +93,16 @@ namespace QSPIFlash {
         QSPI_CommandTypeDef cmd = {0};
         uint8_t id[3];
         
-        cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        cmd.Instruction = W25Q64_JEDEC_ID;
-        cmd.AddressMode = QSPI_ADDRESS_NONE;
+        cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+        cmd.Instruction       = W25Q64_JEDEC_ID;
+        cmd.AddressMode       = QSPI_ADDRESS_NONE;
         cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-        cmd.DataMode = QSPI_DATA_1_LINE;
-        cmd.DummyCycles = 0;
-        cmd.NbData = 3;
-        cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-        cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-        cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        cmd.DataMode          = QSPI_DATA_1_LINE;
+        cmd.DummyCycles       = 0;
+        cmd.NbData            = 3;
+        cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
+        cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+        cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
         
         if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
@@ -249,7 +249,7 @@ namespace QSPIFlash {
             return HAL_ERROR;
         }
 
-        for (int i = 0; i < NUM_PEDALS; i++) {
+        for (uint8_t i = 0; i < NUM_PEDALS; i++) {
             uint8_t* p = &pedalData[i * PEDAL_LEN];
             PedalType type = static_cast<PedalType>(p[0]);
             chain->setPedal(i, type);
@@ -268,7 +268,7 @@ namespace QSPIFlash {
         }
 
         uint8_t pedalData[NUM_PEDALS * PEDAL_LEN] = {};
-        for (int i = 0; i < NUM_PEDALS; i++) {
+        for (uint8_t i = 0; i < NUM_PEDALS; i++) {
             Pedal* pedal = chain->getPedal(i);
             PedalType type = pedal ? pedal->getType() : PedalType::PASS_THROUGH;
             pedalData[i * PEDAL_LEN] = static_cast<uint8_t>(type);
