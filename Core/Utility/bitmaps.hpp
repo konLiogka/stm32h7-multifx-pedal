@@ -53,17 +53,26 @@ extern const Bitmap  edit_pedal_bitmap;
 extern const uint8_t mod_pedal[FULL_SCREEN];
 extern const Bitmap  mod_pedal_bitmap;
 
+extern const uint8_t pass_through_data[PEDAL_SIZE];
+extern const Bitmap  pass_through_bitmap;
+
 extern const uint8_t overdrive_distortion_data[PEDAL_SIZE];
 extern const Bitmap  overdrive_distortion_bitmap;
 
 extern const uint8_t echo_data[PEDAL_SIZE];
 extern const Bitmap  echo_bitmap;
 
-extern const uint8_t pass_through_data[PEDAL_SIZE];
-extern const Bitmap  pass_through_bitmap;
-
 extern const uint8_t reverb_data[PEDAL_SIZE];
 extern const Bitmap  reverb_bitmap;
+
+extern const uint8_t overdrive_distortion_disabled_data[PEDAL_SIZE];
+extern const Bitmap  overdrive_distortion_disabled_bitmap;
+
+extern const uint8_t echo_disabled_data[PEDAL_SIZE];
+extern const Bitmap  echo_disabled_bitmap;
+
+extern const uint8_t reverb_disabled_data[PEDAL_SIZE];
+extern const Bitmap  reverb_disabled_bitmap;
 
 extern const uint8_t vol_0[VOLUME_BAR_SIZE];
 extern const uint8_t vol_1[VOLUME_BAR_SIZE];

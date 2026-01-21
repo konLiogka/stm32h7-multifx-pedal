@@ -1,4 +1,6 @@
 #include "bitmaps.hpp"
+#include <cstring>
+
 
 #pragma once 
 #ifndef PEDAL_HPP_
@@ -14,13 +16,16 @@ enum class PedalType {
 class Pedal {
 public:
     Pedal(PedalType t)
-        : type(t), image(getBitmapForType(t)), name(getNameForType(t)) {}
+        : type(t), 
+          image(getBitmapForType(t)), 
+          disabled_image(getDisabledBitmapForType(t)),
+          name(getNameForType(t)) {}
 
     virtual ~Pedal() {}
     
     float volume = 0.5f;
 
-    const Bitmap& getImage() const { return image; }
+    const Bitmap& getImage() const { return enabled ? image : disabled_image; }
     PedalType getType() const { return type; }
     const char* getName() const { return name; }
     virtual const char* const* getMemberNames() const { return nullptr; }
@@ -30,14 +35,20 @@ public:
     virtual float getParamValue(uint8_t index) const { return (index == 0) ? volume : 0.0f; }
 
     static Pedal* createPedal(PedalType type);
+    virtual void process(float* input, float* output, uint16_t length);
+    virtual bool isEnabled() const { return enabled; }
+    virtual void setEnabled(bool state) { enabled = state; } 
 
 protected:
     PedalType type;
     Bitmap image;
+    Bitmap disabled_image;
     const char* name;
+    bool enabled = true;
 
 private:
     static const Bitmap& getBitmapForType(PedalType type);
+    static const Bitmap& getDisabledBitmapForType(PedalType type) ;
     static const char* getNameForType(PedalType type);
 };
 
@@ -64,6 +75,8 @@ public:
 
     void setParams(float* params) override;
     void getParams(float* params) const override;
+
+    void process(float* input, float* output, uint16_t length) override;
 };
 
 // Echo/Delay pedals
@@ -86,6 +99,8 @@ public:
 
     void setParams(float* params) override;
     void getParams(float* params) const override;
+
+    void process(float* input, float* output, uint16_t length) override;
 };
 
 // Reverb pedals
@@ -107,6 +122,8 @@ public:
     
     void setParams(float* params) override;
     void getParams(float* params) const override;
+
+    void process(float* input, float* output, uint16_t length) override;
 };
 
 // Pass-through pedals (EQ-style controls)
@@ -130,6 +147,8 @@ public:
     
     void setParams(float* params) override ;
     void getParams(float* params) const override ;
+    
+    void process(float* input, float* output, uint16_t length) override;
 };
 
  

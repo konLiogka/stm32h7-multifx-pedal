@@ -85,10 +85,6 @@ int main(void)
   Display::init();
   Display::clear();
 
-  showStartupScreen();
-
-  HAL_Delay(100);
-
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_DAC1_Init();
@@ -124,6 +120,10 @@ int main(void)
   }
 
   MPU_Config();
+
+  showStartupScreen();
+
+  HAL_Delay(200);
 
   mainApp();
 

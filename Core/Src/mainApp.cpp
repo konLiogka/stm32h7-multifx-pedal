@@ -10,7 +10,6 @@
 #include "modPedal.hpp"
 #include "qspi_flash.hpp"
 #include <cstdio>
-#include <cstring>
 
 #define THRESHOLD 4
 #define SEL_VIEW_B GPIO_PIN_0
@@ -78,6 +77,17 @@ void updateSelectedPedal(uint8_t index)
     Display::drawBitmap(indicator_bitmap, 26 * index + 21, 15);
 }
 
+void togglePedal(uint8_t index, Pedal *pedal)
+{
+    if (pedal != nullptr)
+    {
+        pedal->setEnabled(!pedal->isEnabled());
+
+        const Bitmap &bmp = pedal->getImage();
+        Display::drawBitmap(bmp, pedalPositionsX[index], PEDAL_PAGE_START);
+    }
+}
+
 void mainApp(void)
 {
     Display::init();
@@ -85,7 +95,7 @@ void mainApp(void)
     err_code = QSPIFlash::init();
     if (err_code != HAL_OK)
     {
-        Display::printf("QSPI Flash: %d", err_code );
+        Display::printf("QSPI Flash: %d", err_code);
         Error_Handler();
     }
     err_code = QSPIFlash::loadEffectsChain(&loadedChain);
@@ -145,9 +155,7 @@ extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-
-        memcpy(dac_buf, adc_buf, HALF_BUFFER_SIZE * sizeof(uint16_t));
-
+        loadedChain.process(adc_buf, dac_buf, 0, HALF_BUFFER_SIZE);
     }
 }
 
@@ -155,9 +163,7 @@ extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-
-        memcpy(dac_buf + HALF_BUFFER_SIZE, adc_buf + HALF_BUFFER_SIZE, HALF_BUFFER_SIZE * sizeof(uint16_t));
-
+        loadedChain.process(adc_buf, dac_buf, HALF_BUFFER_SIZE, HALF_BUFFER_SIZE);
     }
 }
 
@@ -238,7 +244,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             case displayView::PEDALCHAIN_VIEW:
                 if (loadedChain.selectedPedal == 0)
                 {
-                    // disablePedal(selectedPedal);
+                    togglePedal(0, selectedPedal);
                 }
                 else
                 {
@@ -254,7 +260,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             case displayView::PEDALCHAIN_VIEW:
                 if (loadedChain.selectedPedal == 2)
                 {
-                    // disablePedal(selectedPedal);
+                    togglePedal(2, selectedPedal);
                 }
                 else
                 {
@@ -270,7 +276,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             case displayView::PEDALCHAIN_VIEW:
                 if (loadedChain.selectedPedal == 1)
                 {
-                    // disablePedal(selectedPedal);
+                    togglePedal(1, selectedPedal);
                 }
                 else
                 {
@@ -286,7 +292,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             case displayView::PEDALCHAIN_VIEW:
                 if (loadedChain.selectedPedal == 3)
                 {
-                    // disablePedal(selectedPedal);
+                    togglePedal(3, selectedPedal);
                 }
                 else
                 {
@@ -317,7 +323,7 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
             if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK)
             {
-                uint32_t rawValue = 255 - HAL_ADC_GetValue(&hadc2); // Invert 8-bit value
+                uint32_t rawValue = 255 - HAL_ADC_GetValue(&hadc2);
                 uint32_t normalized_value = (((rawValue * 20) >> 8) * 5) + 5;
 
                 if (normalized_value > 100)

@@ -1,4 +1,5 @@
 #include <pedals.hpp>
+#include <dsp.hpp>
 
 const Bitmap& Pedal::getBitmapForType(PedalType type) {
     switch (type) {
@@ -11,6 +12,19 @@ const Bitmap& Pedal::getBitmapForType(PedalType type) {
         default:
             return pass_through_bitmap; 
     }
+}
+
+const Bitmap& Pedal::getDisabledBitmapForType(PedalType type) {
+    switch (type) {
+        case PedalType::OVERDRIVE_DISTORTION:
+            return overdrive_distortion_disabled_bitmap;  
+        case PedalType::ECHO:
+            return echo_disabled_bitmap;                  
+        case PedalType::REVERB:
+            return reverb_disabled_bitmap;             
+        default:
+            return pass_through_bitmap;    
+}
 }
 
 const char* Pedal::getNameForType(PedalType type) {
@@ -96,4 +110,44 @@ void PassThroughPedal::getParams(float* params) const {
     params[1] = mids;   
     params[2] = lows;  
     params[3] = volume; 
+}
+
+void Pedal::process(float* input, float* output, uint16_t length)
+{
+    memcpy(output, input, length * sizeof(float));
+}
+
+void DistortionPedal::process(float* input, float* output, uint16_t length)
+{
+    DSP::applyOverdrive(input, output, length, gain, tone, level, crunch);
+    
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
+}
+
+void EchoPedal::process(float* input, float* output, uint16_t length)
+{
+    DSP::applyEcho(input, output, length, delayTime, feedback, mix);
+    
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
+}
+
+void ReverbPedal::process(float* input, float* output, uint16_t length)
+{
+    DSP::applyReverb(input, output, length, depth, rate, mix);
+    
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
+}
+
+void PassThroughPedal::process(float* input, float* output, uint16_t length)
+{
+    memcpy(output, input, length * sizeof(float));
 }

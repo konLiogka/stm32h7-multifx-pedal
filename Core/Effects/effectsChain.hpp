@@ -16,6 +16,7 @@ public:
     Pedal* getPedal(uint8_t index) const;
     void draw() const;
     void clear();
+    void process(uint16_t* input, uint16_t* output, uint16_t startIdx, uint16_t length);
 
 private:
     Pedal* pedals[4];
