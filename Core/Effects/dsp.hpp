@@ -1,18 +1,11 @@
 #pragma once
 
-#include <cstdint>
+#include <string.h>
+#include <stdint.h>
 
 #ifndef DSP_HPP_
 #define DSP_HPP_
 
-typedef struct {
-    float prev_in;
-    float prev_out;
-} HPF_State;
-
-typedef struct {
-    float prev_out;
-} LPF_State;
 
 namespace DSP {
     void applyOverdrive(float* input, float* output, uint16_t length, 
