@@ -144,7 +144,7 @@ void reset() {
 void clear(void) {
     setCursor(0, 0);
     uint8_t zero = 0x00;
-    for(uint16_t i = 0; i < FULL_SCREEN; i++) {
+    for(uint16_t i = 0; i < DISPLAY; i++) {
         writeData(&zero, 1);
     }
 }

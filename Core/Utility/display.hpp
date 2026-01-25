@@ -18,10 +18,10 @@ For SSD1309 OLED 128x64 display
 #define OLED_RST_Port   GPIOD
 #define OLED_RST_Pin    GPIO_PIN_3
 
-#define DISPLAY_WIDTH   128
-#define DISPLAY_HEIGHT  64
-#define DISPLAY_PAGES   8
-#define FULL_SCREEN     (DISPLAY_WIDTH * DISPLAY_PAGES)
+constexpr uint8_t DISPLAY_WIDTH   = 128;
+constexpr uint8_t DISPLAY_HEIGHT  = 64;
+constexpr uint8_t DISPLAY_PAGES   = 8;
+constexpr uint16_t DISPLAY    = (DISPLAY_WIDTH * DISPLAY_PAGES);
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -42,7 +42,7 @@ namespace Display {
         void printf(const char* format, ...) ;
         void printf(uint8_t x, uint8_t page, const char* format, ...);
 
-        extern uint8_t frameBuffer[FULL_SCREEN];
+        extern uint8_t frameBuffer[DISPLAY];
 }
 
 #endif /* INC_DISPLAY_HPP_ */

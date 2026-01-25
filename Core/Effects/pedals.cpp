@@ -59,7 +59,6 @@ void DistortionPedal::setParams(float* params) {
     gain   = params[1];
     tone   = params[2];
     level  = params[3];
-    crunch = params[4];
 }
 
 void DistortionPedal::getParams(float* params) const {
@@ -67,7 +66,6 @@ void DistortionPedal::getParams(float* params) const {
     params[1] = gain;     
     params[2] = tone;     
     params[3] = level;     
-    params[4] = crunch;    
 }
 
 void EchoPedal::setParams(float* params) {
@@ -75,6 +73,8 @@ void EchoPedal::setParams(float* params) {
     delayTime = params[1];
     feedback  = params[2];
     mix       = params[3];
+    mod       = params[4];
+
 }
 
 void EchoPedal::getParams(float* params) const {
@@ -82,6 +82,7 @@ void EchoPedal::getParams(float* params) const {
     params[1] = delayTime;  
     params[2] = feedback;  
     params[3] = mix;       
+    params[4] = mod;            
 }
 
 void ReverbPedal::setParams(float* params) {
@@ -119,7 +120,7 @@ void Pedal::process(float* input, float* output, uint16_t length)
 
 void DistortionPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyOverdrive(input, output, length, gain, tone, level, crunch);
+    DSP::applyOverdrive(input, output, length, gain, tone, level);
     
     for (uint16_t i = 0; i < length; i++)
     {
@@ -129,7 +130,9 @@ void DistortionPedal::process(float* input, float* output, uint16_t length)
 
 void EchoPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyEcho(input, output, length, delayTime, feedback, mix);
+    DSP::applyEcho(input, output, length,
+                delayTime,  feedback,  mix,
+                 mod);
     
     for (uint16_t i = 0; i < length; i++)
     {

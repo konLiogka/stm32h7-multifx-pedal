@@ -3,9 +3,9 @@
 #ifndef BITMAPS_HPP_
 #define BITMAPS_HPP_
 
-constexpr uint16_t FULL_SCREEN_WIDTH  = 128;
-constexpr uint16_t FULL_SCREEN_HEIGHT = 64;
-constexpr uint32_t FULL_SCREEN 		  = FULL_SCREEN_WIDTH * FULL_SCREEN_HEIGHT;
+constexpr uint16_t MAX_WIDTH      = 128;
+constexpr uint16_t MAX_HEIGHT     = 64;
+constexpr uint32_t MAX_SIZE		  = MAX_WIDTH * MAX_HEIGHT;
 
 constexpr uint16_t  PEDAL_WIDTH  = 24;
 constexpr uint16_t  PEDAL_HEIGHT = 34;
@@ -13,11 +13,11 @@ constexpr uint16_t  PEDAL_SIZE   = (PEDAL_WIDTH * PEDAL_HEIGHT);
 
 constexpr uint8_t VOLUME_BAR_WIDTH  = 5;
 constexpr uint8_t VOLUME_BAR_HEIGHT = 32;
-constexpr uint16_t VOLUME_BAR_SIZE   = (VOLUME_BAR_WIDTH * VOLUME_BAR_HEIGHT);
+constexpr uint16_t VOLUME_BAR_SIZE  = (VOLUME_BAR_WIDTH * VOLUME_BAR_HEIGHT);
 
 constexpr uint8_t MOD_BAR_WIDTH  = 33;
 constexpr uint8_t MOD_BAR_HEIGHT = 36;
-constexpr uint16_t MOD_BAR_SIZE = (MOD_BAR_WIDTH * MOD_BAR_HEIGHT);
+constexpr uint16_t MOD_BAR_SIZE  = (MOD_BAR_WIDTH * MOD_BAR_HEIGHT);
 
 constexpr uint8_t  PEDAL_PAGE_START   = 10;
 constexpr uint8_t  PEDAL1_X_POS_START = 13;
@@ -41,16 +41,16 @@ const int pedalPositionsX[] = {
 
 extern const uint8_t font_5x7[][5];
 
-extern const uint8_t base_chain[FULL_SCREEN];
+extern const uint8_t base_chain[MAX_SIZE];
 extern const Bitmap  base_chain_bitmap;
 
-extern const uint8_t startup_screen[FULL_SCREEN];
+extern const uint8_t startup_screen[MAX_SIZE];
 extern const Bitmap  startup_screen_bitmap;
 
-extern const uint8_t edit_pedal[FULL_SCREEN];
+extern const uint8_t edit_pedal[MAX_SIZE];
 extern const Bitmap  edit_pedal_bitmap;
 
-extern const uint8_t mod_pedal[FULL_SCREEN];
+extern const uint8_t mod_pedal[MAX_SIZE];
 extern const Bitmap  mod_pedal_bitmap;
 
 extern const uint8_t pass_through_data[PEDAL_SIZE];

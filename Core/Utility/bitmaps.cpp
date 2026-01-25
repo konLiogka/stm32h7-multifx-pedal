@@ -106,7 +106,7 @@ const uint8_t font_5x7[][5] =
 		    {0x02,0x01,0x02,0x04,0x02}, // '~'
 };
 
-const uint8_t startup_screen[FULL_SCREEN]
+const uint8_t startup_screen[MAX_SIZE]
 {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -174,7 +174,7 @@ const uint8_t startup_screen[FULL_SCREEN]
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-const uint8_t base_chain[FULL_SCREEN]
+const uint8_t base_chain[MAX_SIZE]
 {
 		0x00, 0x00, 0x00, 0x80, 0x80, 0x40, 0x40, 0x20, 0x20, 0x10, 0xd0, 0x28, 0x18, 0x0c, 0x04, 0x00, 
 	0xf8, 0xa8, 0x88, 0x00, 0xf8, 0x88, 0x70, 0x00, 0x88, 0xf8, 0x88, 0x00, 0x08, 0xf8, 0x08, 0x00, 
@@ -242,7 +242,7 @@ const uint8_t base_chain[FULL_SCREEN]
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-const uint8_t edit_pedal[FULL_SCREEN]
+const uint8_t edit_pedal[MAX_SIZE]
 {
 0x00, 0x00, 0x00, 0x80, 0x80, 0x40, 0x40, 0x20, 0x20, 0x10, 0xd0, 0x28, 0x18, 0x0c, 0x04, 0x00, 
 	0xf8, 0x10, 0x20, 0x10, 0xf8, 0x00, 0x70, 0x88, 0x88, 0x88, 0x70, 0x00, 0xf8, 0x88, 0x70, 0x00, 
@@ -310,7 +310,7 @@ const uint8_t edit_pedal[FULL_SCREEN]
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-const uint8_t mod_pedal[FULL_SCREEN]
+const uint8_t mod_pedal[MAX_SIZE]
 {
 	0x00, 0x00, 0x00, 0x80, 0x80, 0x40, 0x40, 0x20, 0x20, 0x10, 0xd0, 0x28, 0x18, 0x0c, 0x04, 0x00, 
 	0xf8, 0xa8, 0x50, 0x00, 0xf0, 0x28, 0xf0, 0x00, 0x70, 0x88, 0x88, 0x00, 0xf8, 0x20, 0xd8, 0x00, 
@@ -685,20 +685,19 @@ const uint8_t indicator[32]
 	0x01, 0x03, 0x07, 0x0f, 0x0f, 0x07, 0x03, 0x01
 };
 
-const Bitmap startup_screen_bitmap = { startup_screen, FULL_SCREEN_WIDTH, FULL_SCREEN_HEIGHT };
-const Bitmap base_chain_bitmap = { base_chain, FULL_SCREEN_WIDTH, FULL_SCREEN_HEIGHT };
-const Bitmap edit_pedal_bitmap = { edit_pedal, FULL_SCREEN_WIDTH, FULL_SCREEN_HEIGHT };
-const Bitmap mod_pedal_bitmap  = { mod_pedal, FULL_SCREEN_WIDTH,  FULL_SCREEN_HEIGHT };
+const Bitmap startup_screen_bitmap = {startup_screen, MAX_WIDTH, MAX_HEIGHT};
+const Bitmap base_chain_bitmap     = {base_chain, MAX_WIDTH, MAX_HEIGHT};
+const Bitmap edit_pedal_bitmap     = {edit_pedal, MAX_WIDTH, MAX_HEIGHT};
+const Bitmap mod_pedal_bitmap      = {mod_pedal, MAX_WIDTH, MAX_HEIGHT};
 
-const Bitmap overdrive_distortion_bitmap = { overdrive_distortion_data, PEDAL_WIDTH, PEDAL_HEIGHT };
-const Bitmap echo_bitmap                 = { echo_data, 				PEDAL_WIDTH, PEDAL_HEIGHT };
-const Bitmap pass_through_bitmap 		 = { pass_through_data, 		PEDAL_WIDTH, PEDAL_HEIGHT };
-const Bitmap reverb_bitmap 				 = { reverb_data, 				PEDAL_WIDTH, PEDAL_HEIGHT };
+const Bitmap overdrive_distortion_bitmap = {overdrive_distortion_data, PEDAL_WIDTH, PEDAL_HEIGHT};
+const Bitmap echo_bitmap                 = {echo_data, PEDAL_WIDTH, PEDAL_HEIGHT};
+const Bitmap pass_through_bitmap         = {pass_through_data, PEDAL_WIDTH, PEDAL_HEIGHT};
+const Bitmap reverb_bitmap               = {reverb_data, PEDAL_WIDTH, PEDAL_HEIGHT};
 
-const Bitmap overdrive_distortion_disabled_bitmap 	 = { overdrive_distortion_disabled_data,  PEDAL_WIDTH, PEDAL_HEIGHT };
-const Bitmap echo_disabled_bitmap 					 = { echo_disabled_data, 				  PEDAL_WIDTH, PEDAL_HEIGHT };
-const Bitmap reverb_disabled_bitmap 			     = { reverb_disabled_data, 				  PEDAL_WIDTH, PEDAL_HEIGHT };
-
+const Bitmap overdrive_distortion_disabled_bitmap = {overdrive_distortion_disabled_data, PEDAL_WIDTH, PEDAL_HEIGHT};
+const Bitmap echo_disabled_bitmap                 = {echo_disabled_data, PEDAL_WIDTH, PEDAL_HEIGHT};
+const Bitmap reverb_disabled_bitmap               = {reverb_disabled_data, PEDAL_WIDTH, PEDAL_HEIGHT};
 
 const Bitmap vol_0_bitmap = { vol_0, VOLUME_BAR_WIDTH, VOLUME_BAR_HEIGHT };
 const Bitmap vol_1_bitmap = { vol_1, VOLUME_BAR_WIDTH, VOLUME_BAR_HEIGHT };
