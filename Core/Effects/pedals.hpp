@@ -11,6 +11,7 @@ enum class PedalType {
 	OVERDRIVE_DISTORTION,
     ECHO,
     REVERB,
+    NOISE_GATE,
     PASS_THROUGH
 };
 
@@ -87,15 +88,13 @@ public:
         delayTime = 0.5f;
         feedback = 0.5f;
         mix = 0.5f;
-        mod = 0.5f;
     }
     
     float delayTime;
     float feedback;
     float mix;
-    float mod;
 
-    static constexpr const char* memberNames[] = {"Vol", "Delay", "Fdbck", "Mix", "Mod"};
+    static constexpr const char* memberNames[] = {"Vol", "Delay", "Fdbck", "Mix"};
     static constexpr uint8_t member_size = array_size(memberNames);
 
     const char* const* getMemberNames() const override { return memberNames; }
@@ -112,9 +111,9 @@ class ReverbPedal : public Pedal {
 public:
     ReverbPedal() : Pedal(PedalType::REVERB) {
         volume = 1.0f;
-        depth = 0.5f;
-        rate = 0.5f;
-        mix = 0.5f;
+        depth  = 0.5f;
+        rate   = 0.5f;
+        mix    = 0.5f;
     }
     float depth;
     float rate;
@@ -132,12 +131,37 @@ public:
     void process(float* input, float* output, uint16_t length) override;
 };
 
+class NoiseGatePedal : public Pedal {
+public:
+    NoiseGatePedal() : Pedal(PedalType::NOISE_GATE) {
+        volume    = 1.0f;
+        threshold = 0.5f;
+        hold      = 0.5f;
+        release   = 0.5f;
+    }
+    
+    float threshold;
+    float hold;
+    float release;
+
+    static constexpr const char* memberNames[] = {"Vol", "Trshld", "Hold", "Rel" };
+    static constexpr uint8_t member_size = array_size(memberNames);
+
+    const char* const* getMemberNames() const override { return memberNames; }
+    uint8_t getMemberSize() const override { return member_size; }
+
+    void setParams(float* params) override;
+    void getParams(float* params) const override;
+
+    void process(float* input, float* output, uint16_t length) override;
+};
+
 class PassThroughPedal : public Pedal {
 public:
     PassThroughPedal() : Pedal(PedalType::PASS_THROUGH) {
-        highs = 1.0f;
-        lows = 1.0f;
-        mids = 1.0f;
+        highs  = 1.0f;
+        lows   = 1.0f;
+        mids   = 1.0f;
         volume = 1.0f;
     }
     

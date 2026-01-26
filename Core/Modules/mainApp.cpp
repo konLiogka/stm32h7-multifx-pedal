@@ -161,6 +161,8 @@ extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc->Instance == ADC1)
     {
         loadedChain.process(adc_buf, dac_buf, 0, HALF_BUFFER_SIZE);
+        SCB_CleanDCache_by_Addr((uint32_t *)dac_buf, 
+                                HALF_BUFFER_SIZE * sizeof(uint16_t));
     }
 }
 
@@ -169,6 +171,8 @@ extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc->Instance == ADC1)
     {
         loadedChain.process(adc_buf, dac_buf, HALF_BUFFER_SIZE, HALF_BUFFER_SIZE);
+        SCB_CleanDCache_by_Addr((uint32_t *)&dac_buf[HALF_BUFFER_SIZE], 
+                                HALF_BUFFER_SIZE * sizeof(uint16_t));
     }
 }
 

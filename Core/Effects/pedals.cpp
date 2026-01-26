@@ -9,6 +9,8 @@ const Bitmap& Pedal::getBitmapForType(PedalType type) {
             return echo_bitmap;
         case PedalType::REVERB:
             return reverb_bitmap;
+        case PedalType::NOISE_GATE:
+            return noise_gate_bitmap;
         default:
             return pass_through_bitmap; 
     }
@@ -22,6 +24,8 @@ const Bitmap& Pedal::getDisabledBitmapForType(PedalType type) {
             return echo_disabled_bitmap;                  
         case PedalType::REVERB:
             return reverb_disabled_bitmap;             
+        case PedalType::NOISE_GATE:
+            return noise_gate_disabled_bitmap;   
         default:
             return pass_through_bitmap;    
 }
@@ -35,6 +39,8 @@ const char* Pedal::getNameForType(PedalType type) {
             return "Echo";
         case PedalType::REVERB:
             return "Reverb";
+        case PedalType::NOISE_GATE:
+            return "Noise Gate";
         default:
             return "Pass Through"; 
     }
@@ -48,6 +54,8 @@ Pedal* Pedal::createPedal(PedalType type) {
             return new EchoPedal();
         case PedalType::REVERB:
             return new ReverbPedal();
+        case PedalType::NOISE_GATE:
+            return new NoiseGatePedal();
         case PedalType::PASS_THROUGH:
         default:
             return new PassThroughPedal();
@@ -73,8 +81,6 @@ void EchoPedal::setParams(float* params) {
     delayTime = params[1];
     feedback  = params[2];
     mix       = params[3];
-    mod       = params[4];
-
 }
 
 void EchoPedal::getParams(float* params) const {
@@ -82,7 +88,6 @@ void EchoPedal::getParams(float* params) const {
     params[1] = delayTime;  
     params[2] = feedback;  
     params[3] = mix;       
-    params[4] = mod;            
 }
 
 void ReverbPedal::setParams(float* params) {
@@ -113,9 +118,27 @@ void PassThroughPedal::getParams(float* params) const {
     params[3] = volume; 
 }
 
+void NoiseGatePedal::setParams(float* params) {
+    volume    = params[0];
+    threshold = params[1];
+    hold      = params[2];
+    release   = params[3];
+}
+
+void NoiseGatePedal::getParams(float* params) const {
+    params[0] = volume;   
+    params[1] = threshold;   
+    params[2] = hold;  
+    params[3] = release;  
+}
+
 void Pedal::process(float* input, float* output, uint16_t length)
 {
     memcpy(output, input, length * sizeof(float));
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
 }
 
 void DistortionPedal::process(float* input, float* output, uint16_t length)
@@ -130,9 +153,7 @@ void DistortionPedal::process(float* input, float* output, uint16_t length)
 
 void EchoPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyEcho(input, output, length,
-                delayTime,  feedback,  mix,
-                 mod);
+    DSP::applyEcho(input, output, length, delayTime, feedback, mix);
     
     for (uint16_t i = 0; i < length; i++)
     {
@@ -150,7 +171,20 @@ void ReverbPedal::process(float* input, float* output, uint16_t length)
     }
 }
 
+void NoiseGatePedal::process(float* input, float* output, uint16_t length)
+{
+    DSP::applyNoiseGate(input, output, length, threshold, hold, release);
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
+}
+
 void PassThroughPedal::process(float* input, float* output, uint16_t length)
 {
     memcpy(output, input, length * sizeof(float));
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
 }
