@@ -5,7 +5,7 @@
  *      Author: kliogka
  */
 
-#include "mainApp.hpp"
+#include <mainView.hpp>
 #include "editPedal.hpp"
 #include "modPedal.hpp"
 #include "qspi_flash.hpp"

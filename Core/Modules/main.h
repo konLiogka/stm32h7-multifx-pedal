@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-    #include "mainApp.hpp"
+    #include <mainView.hpp>
 #endif
 
 #endif /* MAIN_H */
