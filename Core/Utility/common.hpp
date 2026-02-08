@@ -6,4 +6,8 @@ constexpr std::size_t array_size(T const (&)[N]) noexcept {
     return N;
 }
 
+constexpr float clamp(float x, float min, float max) {
+    return (x < min) ? min : ((x > max) ? max : x);
+}
+
 #endif

@@ -1,5 +1,6 @@
 #include "effectsChain.hpp"
 #include "display.hpp"
+#include <array>
 
 EffectsChain::EffectsChain() {
     pedals[0] = Pedal::createPedal(PedalType::PASS_THROUGH);
@@ -43,18 +44,18 @@ void EffectsChain::draw() const {
 
 void EffectsChain::process(uint16_t* input, uint16_t* output, uint16_t startIdx, uint16_t length)
 {
-    static float buffer_a[1024];
-    static float buffer_b[1024];
+    static std::array<float, 1024> buffer_a;
+    static std::array<float, 1024> buffer_b;
     
-    for (uint16_t i = 0; i < length; i++)
+    for (uint16_t i = 0; i < length; ++i)
     {
-        buffer_a[i] = ((float)input[startIdx + i] - 2048.0f) / 2048.0f;
+        buffer_a[i] = (static_cast<float>(input[startIdx + i]) - 2048.0f) / 2048.0f;
     }
     
-    float* in_buf = buffer_a;
-    float* out_buf = buffer_b;
+    float* in_buf = buffer_a.data();
+    float* out_buf = buffer_b.data();
     
-    for (uint8_t i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < 4; ++i)
     {
         if (pedals[i] != nullptr && pedals[i]->isEnabled())
         {
@@ -76,17 +77,13 @@ void EffectsChain::process(uint16_t* input, uint16_t* output, uint16_t startIdx,
         }
     }
     
-    for (uint16_t i = 0; i < length; i++)
+    for (uint16_t i = 0; i < length; ++i)
     {
-        float sample = in_buf[i];
-        
-        if (sample > 1.0f) sample = 1.0f;
-        if (sample < -1.0f) sample = -1.0f;
-        
-        int32_t value = (int32_t)(sample * 2048.0f) + 2048;
-        if (value > 4095) value = 4095;
-        if (value < 0) value = 0;
-        
-        output[startIdx + i] = (uint16_t)value;
+        const float sample = clamp(in_buf[i], -1.0f, 1.0f);
+        const int32_t value = clamp(
+            static_cast<int32_t>(sample * 2048.0f) + 2048,
+            0, 4095
+        );
+        output[startIdx + i] = static_cast<uint16_t>(value);
     }
 }

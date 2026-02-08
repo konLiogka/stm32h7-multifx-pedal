@@ -1,5 +1,7 @@
 #include "dsp.hpp"
 #include <cstring>
+#include "common.hpp"
+#include <array>
 #include <cmath>
 
 typedef struct {
@@ -12,36 +14,37 @@ typedef struct {
 } LPF_State;
 
 
+constexpr uint32_t BUFFER_SIZE = 32768;
+constexpr float SAMPLE_RATE    = 96000.0f;
+constexpr float GAMMA          = 0.7f;
+constexpr uint8_t NUM_COMBS    = 8;
+constexpr uint8_t NUM_ALLPASS  = 4;
 
-// For Delay based effects
-static float delayBuffer[32768]  = {0};
-static const uint32_t bufferSize = 32768;
-static uint32_t writePos         = 0;
-static float feedbackFilterState = 0.0f;
-const  float sampleRate          = 96000.0f;
-const  float gamma_val           = 0.7f;
+std::array<float, BUFFER_SIZE>  delayBuffer{};
+static    uint32_t writePos         = 0;
+static    float feedbackFilterState = 0.0f;
 
-constexpr uint8_t NUM_COMBS   = 8;
-constexpr uint8_t NUM_ALLPASS = 4;
-
-static const uint32_t combDelays[NUM_COMBS] = {
+constexpr std::array<uint32_t, NUM_COMBS> combDelays = {
     3163, 3617, 4013, 4409, 4801, 5209, 5597, 6007
 };
 
-static const uint32_t allpassDelays[NUM_ALLPASS] = {
+constexpr std::array<uint32_t, NUM_ALLPASS> allpassDelays = {
     556, 441, 341, 225
 };
-
-constexpr float clamp(float x, float min, float max) {
-    return (x < min) ? min : ((x > max) ? max : x);
-}
  
-static float combBuffers[NUM_COMBS][6008] = {0}; 
-static float allpassBuffers[NUM_ALLPASS][560] = {0};
-static uint32_t combPositions[NUM_COMBS]      = {0};
-static uint32_t allpassPositions[NUM_ALLPASS] = {0};
-static float combFilterStates[NUM_COMBS]      = {0};
+struct CombFilterState {
+    std::array<float, 6008> buffer{};
+    uint32_t position{};
+    float filterState{};
+};
 
+struct AllpassFilterState {
+    std::array<float, 560> buffer{};
+    uint32_t position{};
+};
+
+static std::array<CombFilterState, NUM_COMBS> combFilters{};
+static std::array<AllpassFilterState, NUM_ALLPASS> allpassFilters{};
 
 float lowPassFilter(float sample, float tone, LPF_State* state)
 {
@@ -65,21 +68,17 @@ float highPassFilter(float sample, HPF_State* state)
     return hp_out;
 }
 
-
-float combFilter(float input, float* buffer, uint32_t bufferSize, 
+float combFilter(float input, float* buffer, uint32_t BUFFER_SIZE, 
                  uint32_t* position, float* filterState, 
                  float feedback, float damping)
 {
-    
-    float delayed = buffer[*position];
-        
-    float filtered = (*filterState) * damping + delayed * (1.0f - damping);
-        *filterState = filtered;
-        
+    const float delayed = buffer[*position];
+    const float filtered = (*filterState) * damping + delayed * (1.0f - damping);
+    *filterState = filtered;
     buffer[*position] = input + filtered * feedback;
-        
+    
     *position = (*position + 1);
-    if (*position >= bufferSize) *position = 0;
+    if (*position >= BUFFER_SIZE) *position = 0;
     
     return delayed;
 }
@@ -121,69 +120,68 @@ void applyEcho(float* input, float* output, uint16_t length,
     feedback  = clamp(feedback, 0.0f, 0.95f);
     mix       = clamp(mix, 0.0f, 1.0f);
         
-    const    float minDelayMs = 20.0f;
-    const    float maxDelayMs = 680.0f;
-    float    delayMs          = minDelayMs + delayTime * (maxDelayMs - minDelayMs);
-    uint32_t delaySamples     = (uint32_t)((delayMs / 1000.0f) * sampleRate);
-    
-    if (delaySamples >= bufferSize) {
-        delaySamples = bufferSize - 1;
-    }
+    constexpr float minDelayMs       = 20.0f;
+    constexpr float maxDelayMs       = 680.0f;
+    float     delayMs                = minDelayMs + delayTime * (maxDelayMs - minDelayMs);
+    const     uint32_t delay_samples = std::min(
+            static_cast<uint32_t>((delayMs / 1000.0f) * SAMPLE_RATE),
+            BUFFER_SIZE - 1
+        );
     
     for (uint16_t i = 0; i < length; ++i)
     {
         float x_n = input[i];
         
-        uint32_t readPos       = (writePos + bufferSize - delaySamples) & (bufferSize - 1);
+        uint32_t readPos       = (writePos + BUFFER_SIZE - delay_samples) & (BUFFER_SIZE - 1);
         float    delayedSample = delayBuffer[readPos];
 
-        feedbackFilterState   = feedbackFilterState * gamma_val + delayedSample * (1.0f - gamma_val);
+        feedbackFilterState   = feedbackFilterState * GAMMA + delayedSample * (1.0f - GAMMA);
         delayBuffer[writePos] = x_n + feedbackFilterState * feedback;
 
-        writePos = (writePos + 1) & (bufferSize - 1);
+        writePos = (writePos + 1) & (BUFFER_SIZE - 1);
 
         output[i] = (1.0f - mix) * x_n + mix * delayedSample;
     }
 }
 
-
 void applyReverb(float* input, float* output, uint16_t length,
-                float roomSize, float damping, float mix)
+                 float roomSize, float damping, float mix)
 {
     roomSize = clamp(roomSize, 0.0f, 1.0f);
-    damping = clamp(damping, 0.0f, 1.0f);
-    mix = clamp(mix, 0.0f, 1.0f);
+    damping  = clamp(damping, 0.0f, 1.0f);
+    mix      = clamp(mix, 0.0f, 1.0f);
     
-    float combFeedback = 0.7f + (roomSize * 0.25f);
-    const float allpassFeedback = 0.5f;
+    const float combFeedback = 0.7f + (roomSize * 0.25f);
+    constexpr float allpassFeedback = 0.5f;
     
     for (uint16_t i = 0; i < length; ++i)
     {
-        float x_n = input[i];
+        const float x_n = input[i];
         float reverbSignal = 0.0f;
         
-        for (uint8_t c = 0; c < NUM_COMBS; ++c)
+        for (size_t c = 0; c < NUM_COMBS; ++c)
         {
-            float combOut = combFilter(x_n, combBuffers[c], combDelays[c],
-                                       &combPositions[c], &combFilterStates[c],
-                                       combFeedback, damping);
+            auto& comb = combFilters[c];
+            const float combOut = combFilter(x_n, comb.buffer.data(), combDelays[c],
+                                             &comb.position, &comb.filterState,
+                                             combFeedback, damping);
             reverbSignal += combOut;
         }
         
-        reverbSignal *= 0.125f;  
+        reverbSignal *= 0.125f;
         
-        for (uint8_t a = 0; a < NUM_ALLPASS; ++a)
+        for (size_t a = 0; a < NUM_ALLPASS; ++a)
         {
-            uint32_t delayLength = allpassDelays[a];
-            uint32_t readPos     = allpassPositions[a];
+            auto& allpass = allpassFilters[a];
+            const uint32_t delayLength = allpassDelays[a];
             
-            float delayed  = allpassBuffers[a][readPos];
-            float input_ap = reverbSignal;
+            const float delayed = allpass.buffer[allpass.position];
+            const float input_ap = reverbSignal;
             
-            reverbSignal               = -input_ap + delayed;
-            allpassBuffers[a][readPos] = input_ap + allpassFeedback * delayed;
+            reverbSignal = -input_ap + delayed;
+            allpass.buffer[allpass.position] = input_ap + allpassFeedback * delayed;
             
-            allpassPositions[a] = (readPos + 1) < delayLength ? (readPos + 1) : 0;
+            allpass.position = (allpass.position + 1) < delayLength ? (allpass.position + 1) : 0;
         }
         
         output[i] = (1.0f - mix) * x_n + mix * reverbSignal;
@@ -201,16 +199,15 @@ void applyNoiseGate(float* input, float* output, uint16_t length,
     
     const float minHoldMs    = 10.0f;
     const float maxHoldMs    = 500.0f;
-    const float sampleRateMs = sampleRate * 0.001f;
+    const float sampleRateMs = SAMPLE_RATE * 0.001f;
     float holdMs             = minHoldMs + hold * (maxHoldMs - minHoldMs);
 
     uint32_t holdSamples        = (uint32_t)(holdMs * sampleRateMs);
     const    float minReleaseMs = 5.0f;
     const    float maxReleaseMs = 500.0f;
     float    releaseMs          = minReleaseMs + release * (maxReleaseMs - minReleaseMs);
-    float    releaseCoeff       = expf(-1000.0f / (releaseMs * sampleRate));
+    float    releaseCoeff       = expf(-1000.0f / (releaseMs * SAMPLE_RATE));
     
-    const float attackMs    = 1.0f;
     const float attackCoeff = 0.989958f;
     
     static float envelope       = 0.0f;

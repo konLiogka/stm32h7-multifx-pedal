@@ -228,9 +228,9 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 PedalType currentType = selectedPedal->getType();
 
                 int direction = (GPIO_Pin == PEDAL_0) ? 1 : -1;
-                int newTypeIndex = (static_cast<int>(currentType) + direction + 4) % 4;
+                int newTypeIndex = (static_cast<int>(currentType) + direction + pedalType_size) % pedalType_size;
                 if (newTypeIndex < 0)
-                    newTypeIndex += 4;
+                    newTypeIndex += pedalType_size;
 
                 selectedPedal = Pedal::createPedal(static_cast<PedalType>(newTypeIndex));
 
@@ -334,11 +334,10 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             {
                 uint32_t rawValue = 255 - HAL_ADC_GetValue(&hadc2);
                 uint32_t normalized_value = (((rawValue * 20) >> 8) * 5) + 5;
+                normalized_value = clamp(normalized_value, 0, 100);
+                
 
-                if (normalized_value > 100)
-                    normalized_value = 100;
-
-                if (abs((int)normalized_value - (int)potValues[channel]) >= 5)
+                if (abs((int)normalized_value - (int)potValues[channel]) >= 3)
                 {
                     potValues[channel] = normalized_value;
                     if (currentView == displayView::PEDALEDIT_VIEW)

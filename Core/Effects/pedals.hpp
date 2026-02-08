@@ -15,6 +15,8 @@ enum class PedalType {
     PASS_THROUGH
 };
 
+constexpr uint8_t pedalType_size = static_cast<size_t>(PedalType::PASS_THROUGH) + 1;
+
 class Pedal {
 public:
     Pedal(PedalType t)
