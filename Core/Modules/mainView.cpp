@@ -11,16 +11,17 @@
 #include "qspi_flash.hpp"
 #include <cstdio>
 
-#define THRESHOLD 4
-#define SEL_VIEW_B GPIO_PIN_0
-#define SELECT_PEDAL_0 GPIO_PIN_6
-#define SELECT_PEDAL_1 GPIO_PIN_15
-#define SELECT_PEDAL_2 GPIO_PIN_10
-#define SELECT_PEDAL_3 GPIO_PIN_1
-#define PEDAL_0 GPIO_PIN_9
-#define PEDAL_1 GPIO_PIN_8
-#define BUFFER_SIZE 2048
-#define HALF_BUFFER_SIZE (BUFFER_SIZE / 2)
+#define SEL_VIEW_B      GPIO_PIN_0
+#define SETTINGS_VIEW_B GPIO_PIN_4
+#define SELECT_PEDAL_0  GPIO_PIN_6
+#define SELECT_PEDAL_1  GPIO_PIN_15
+#define SELECT_PEDAL_2  GPIO_PIN_10
+#define SELECT_PEDAL_3  GPIO_PIN_1
+#define PEDAL_0         GPIO_PIN_9
+#define PEDAL_1         GPIO_PIN_8
+
+constexpr uint16_t BUFFER_SIZE = 2048;
+constexpr uint16_t HALF_BUFFER_SIZE  = (BUFFER_SIZE / 2);
 
 __attribute__((section(".sram3"))) __attribute__((aligned(32)))
 uint16_t adc_buf[BUFFER_SIZE];
@@ -30,7 +31,7 @@ uint16_t dac_buf[BUFFER_SIZE];
 
 EffectsChain loadedChain;
 
-uint32_t potValues[3];
+volatile uint32_t potValues[3];
 uint8_t potTouchedFlags = 0; // one hot encoded : bit 0 = pot0, bit 1 = pot1, bit 2 = pot2
 Pedal *selectedPedal = Pedal::createPedal(PedalType::PASS_THROUGH);
 uint8_t page = 0;
@@ -99,8 +100,8 @@ void mainApp(void)
         Error_Handler();
     }
     EffectsChain chain;
-    chain.setPedal(0, PedalType::OVERDRIVE_DISTORTION);
-    chain.setPedal(1, PedalType::ECHO);
+    chain.setPedal(0, PedalType::PASS_THROUGH);
+    chain.setPedal(1, PedalType::PASS_THROUGH);
     chain.setPedal(2, PedalType::PASS_THROUGH);
     chain.setPedal(3, PedalType::PASS_THROUGH);
 
@@ -211,17 +212,12 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 break;
             }
             break;
-
+        case SETTINGS_VIEW_B:
+        {
+            break;
+        }    
         case PEDAL_0:
-            if (currentView == displayView::PEDALEDIT_VIEW)
-            {
-                Display::drawBitmap(mod_pedal_bitmap, 0, 0);
-
-                displayPedalSettings(selectedPedal, 1);
-                page = 1;
-                break;
-            }
-
+            // Fallthrough
         case PEDAL_1:
             if (currentView == displayView::PEDALSELECT_VIEW)
             {
@@ -240,8 +236,8 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             else if (currentView == displayView::PEDALEDIT_VIEW)
             {
                 Display::drawBitmap(mod_pedal_bitmap, 0, 0);
-                displayPedalSettings(selectedPedal, 0);
-                page = 0;
+                displayPedalSettings(selectedPedal, (GPIO_Pin == PEDAL_0) ? 1 : 0);
+                page = (GPIO_Pin == PEDAL_0) ? 1 : 0;
             }
 
             break;
