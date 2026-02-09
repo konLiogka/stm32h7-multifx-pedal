@@ -1,15 +1,25 @@
 
-# On going WIP project
+# Currently on-going WIP project
+
+**Milestones**
+
+- Create user interface using bitmaps.
+- Setup peripherals such as the display, buttons and QSPI.
+- Enable ADC/DAC with periph-to-mem and mem-to-periph DMA support.
+- Create effects (Distortion, Reverb, Echo and Noise gate).
+- Add configurations for each pedal class.
+- Create digital twin for testing the DSP library.
+- Design circuit for pre-amplifying and filtering the signal.
+- Design PCB.
+- Design 3D casing.
 
 **TO:DO**
 
-- Rewrite HAL hardware initialization using LL/CMSIS
-- Add settings
-- Add crunch pedal
-- Save effects chains
-- Generate ctypesgen types for other pedals types
-
-
+- Rewrite HAL hardware initialization using LL/CMSIS.
+- Add settings view.
+- Add more effects.
+- Save an effects chain.
+- Generate ctypesgen types for other pedals types.
 
 
 # Using DSP lib in Python
