@@ -41,53 +41,28 @@ const int pedalPositionsX[] = {
 
 extern const uint8_t font_5x7[][5];
 
-extern const uint8_t base_chain[MAX_SIZE];
 extern const Bitmap  base_chain_bitmap;
-
-extern const uint8_t startup_screen[MAX_SIZE];
 extern const Bitmap  startup_screen_bitmap;
-
-extern const uint8_t edit_pedal[MAX_SIZE];
 extern const Bitmap  edit_pedal_bitmap;
-
-extern const uint8_t mod_pedal[MAX_SIZE];
 extern const Bitmap  mod_pedal_bitmap;
 
-extern const uint8_t overdrive_distortion_data[PEDAL_SIZE];
 extern const Bitmap  overdrive_distortion_bitmap;
-
-extern const uint8_t overdrive_distortion_disabled_data[PEDAL_SIZE];
 extern const Bitmap  overdrive_distortion_disabled_bitmap;
 
-extern const uint8_t echo_data[PEDAL_SIZE];
 extern const Bitmap  echo_bitmap;
-
-extern const uint8_t echo_disabled_data[PEDAL_SIZE];
 extern const Bitmap  echo_disabled_bitmap;
 
-extern const uint8_t reverb_data[PEDAL_SIZE];
 extern const Bitmap  reverb_bitmap;
-
-extern const uint8_t reverb_disabled_data[PEDAL_SIZE];
 extern const Bitmap  reverb_disabled_bitmap;
 
-extern const uint8_t noise_gate_data[PEDAL_SIZE];
 extern const Bitmap  noise_gate_bitmap;
-
-extern const uint8_t noise_gate_disabled_data[PEDAL_SIZE];
 extern const Bitmap  noise_gate_disabled_bitmap;
 
-extern const uint8_t pass_through_data[PEDAL_SIZE];
+extern const Bitmap  compressor_bitmap;
+extern const Bitmap  compressor_disabled_bitmap;
+
 extern const Bitmap  pass_through_bitmap;
 
-extern const uint8_t vol_0[VOLUME_BAR_SIZE];
-extern const uint8_t vol_1[VOLUME_BAR_SIZE];
-extern const uint8_t vol_2[VOLUME_BAR_SIZE];
-extern const uint8_t vol_3[VOLUME_BAR_SIZE];
-extern const uint8_t vol_4[VOLUME_BAR_SIZE];
-extern const uint8_t vol_5[VOLUME_BAR_SIZE];
-extern const uint8_t vol_6[VOLUME_BAR_SIZE];
-extern const uint8_t vol_7[VOLUME_BAR_SIZE];
 
 extern const Bitmap vol_0_bitmap;
 extern const Bitmap vol_1_bitmap;
@@ -98,26 +73,10 @@ extern const Bitmap vol_5_bitmap;
 extern const Bitmap vol_6_bitmap;
 extern const Bitmap vol_7_bitmap;
 
-extern const uint8_t arrow_right[8*16];
 extern const Bitmap arrow_right_bitmap;
-
-extern const uint8_t arrow_left[8*16];
 extern const Bitmap arrow_left_bitmap;
-
-extern const uint8_t indicator[32];
 extern const Bitmap indicator_bitmap;
 
-extern const uint8_t mod_pedal_val_0[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_1[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_2[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_3[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_4[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_5[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_6[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_7[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_8[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_9[MOD_BAR_SIZE];
-extern const uint8_t mod_pedal_val_10[MOD_BAR_SIZE];
 
 extern const Bitmap mod_pedal_val_bitmap_0;
 extern const Bitmap mod_pedal_val_bitmap_1;

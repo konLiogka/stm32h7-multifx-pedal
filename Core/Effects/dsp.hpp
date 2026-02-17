@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <array>
 
 #ifdef _WIN32
     #ifdef DSP_EXPORT
@@ -38,7 +39,9 @@ namespace DSP
 
     DSP_API void applyNoiseGate(float* input,float* output, uint16_t length,
                     float threshold, float hold, float release);
-
+                    
+    DSP_API void applyCompressor(float *input, float *output, uint16_t length,
+                         float threshold, float ratio, float makeupGain);
     #ifdef __cplusplus
     }
     #endif

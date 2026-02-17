@@ -12,6 +12,7 @@ enum class PedalType {
     ECHO,
     REVERB,
     NOISE_GATE,
+    COMPRESSOR,
     PASS_THROUGH
 };
 
@@ -147,6 +148,31 @@ public:
     float release;
 
     static constexpr const char* memberNames[] = {"Vol", "Trshld", "Hold", "Rel" };
+    static constexpr uint8_t member_size = array_size(memberNames);
+
+    const char* const* getMemberNames() const override { return memberNames; }
+    uint8_t getMemberSize() const override { return member_size; }
+
+    void setParams(float* params) override;
+    void getParams(float* params) const override;
+
+    void process(float* input, float* output, uint16_t length) override;
+};
+
+class CompressorPedal : public Pedal {
+public:
+    CompressorPedal() : Pedal(PedalType::COMPRESSOR) {
+        volume    = 1.0f;
+        threshold = 0.5f;
+        ratio      = 0.5f;
+        makeupGain   = 0.5f;
+    }
+    
+    float threshold;
+    float ratio;
+    float makeupGain;
+
+    static constexpr const char* memberNames[] = {"Vol", "Trshld", "Ratio", "Gain" };
     static constexpr uint8_t member_size = array_size(memberNames);
 
     const char* const* getMemberNames() const override { return memberNames; }

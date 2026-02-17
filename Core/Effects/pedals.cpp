@@ -11,6 +11,8 @@ const Bitmap& Pedal::getBitmapForType(PedalType type) {
             return reverb_bitmap;
         case PedalType::NOISE_GATE:
             return noise_gate_bitmap;
+        case PedalType::COMPRESSOR:
+            return compressor_bitmap;
         default:
             return pass_through_bitmap; 
     }
@@ -25,7 +27,9 @@ const Bitmap& Pedal::getDisabledBitmapForType(PedalType type) {
         case PedalType::REVERB:
             return reverb_disabled_bitmap;             
         case PedalType::NOISE_GATE:
-            return noise_gate_disabled_bitmap;   
+            return noise_gate_disabled_bitmap;  
+        case PedalType::COMPRESSOR:
+            return compressor_disabled_bitmap; 
         default:
             return pass_through_bitmap;    
 }
@@ -41,6 +45,8 @@ const char* Pedal::getNameForType(PedalType type) {
             return "Reverb";
         case PedalType::NOISE_GATE:
             return "Noise Gate";
+        case PedalType::COMPRESSOR:
+            return "Compressor";
         default:
             return "Pass Through"; 
     }
@@ -56,6 +62,8 @@ Pedal* Pedal::createPedal(PedalType type) {
             return new ReverbPedal();
         case PedalType::NOISE_GATE:
             return new NoiseGatePedal();
+        case PedalType::COMPRESSOR:
+            return new CompressorPedal();
         case PedalType::PASS_THROUGH:
         default:
             return new PassThroughPedal();
@@ -132,6 +140,21 @@ void NoiseGatePedal::getParams(float* params) const {
     params[3] = release;  
 }
 
+void CompressorPedal::setParams(float* params) {
+    volume    = params[0];
+    threshold = params[1];
+    ratio      = params[2];
+    makeupGain   = params[3];
+}
+
+void CompressorPedal::getParams(float* params) const {
+    params[0] = volume;   
+    params[1] = threshold;   
+    params[2] = ratio;  
+    params[3] = makeupGain;  
+}
+
+
 void Pedal::process(float* input, float* output, uint16_t length)
 {
     memcpy(output, input, length * sizeof(float));
@@ -174,6 +197,15 @@ void ReverbPedal::process(float* input, float* output, uint16_t length)
 void NoiseGatePedal::process(float* input, float* output, uint16_t length)
 {
     DSP::applyNoiseGate(input, output, length, threshold, hold, release);
+    for (uint16_t i = 0; i < length; i++)
+    {
+        output[i] *= volume;
+    }
+}
+
+void CompressorPedal::process(float* input, float* output, uint16_t length)
+{
+    DSP::applyCompressor(input, output, length, threshold, ratio, makeupGain);
     for (uint16_t i = 0; i < length; i++)
     {
         output[i] *= volume;

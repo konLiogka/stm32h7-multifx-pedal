@@ -262,4 +262,51 @@ namespace DSP
         }
     }
 
+    void applyCompressor(float *input, float *output, uint16_t length,
+                         float threshold, float ratio, float makeupGain)
+    {
+        threshold = clamp(threshold, 0.0f, 1.0f);
+        ratio = clamp(ratio, 0.0f, 1.0f);
+        makeupGain = clamp(makeupGain, 0.0f, 1.0f);
+
+        static float envelope = 0.0f;
+        static float gainSmooth = 1.0f;
+
+        float thresholdLin = 0.001f + threshold * 0.3f;
+
+        float compression = ratio * 2.5f;
+
+        float makeup = 1.0f + makeupGain * 8.0f;
+
+        const float attackCoeff = 0.999f;
+        const float releaseCoeff = 0.9998f;
+
+        for (uint16_t i = 0; i < length; ++i)
+        {
+            float sample = input[i];
+
+            float rectified = fabsf(sample);
+
+            if (rectified > envelope)
+                envelope = envelope * attackCoeff + rectified * (1.0f - attackCoeff);
+            else
+                envelope = envelope * releaseCoeff + rectified * (1.0f - releaseCoeff);
+
+            float targetGain = 1.0f;
+
+            if (envelope > thresholdLin)
+            {
+                float overshoot = (envelope - thresholdLin) * (1.0f / thresholdLin);
+                float reduction = 1.0f + overshoot * compression;
+                targetGain = 1.0f / reduction;
+            }
+
+            if (targetGain < gainSmooth)
+                gainSmooth = gainSmooth * attackCoeff + targetGain * (1.0f - attackCoeff);
+            else
+                gainSmooth = gainSmooth * releaseCoeff + targetGain * (1.0f - releaseCoeff);
+
+            output[i] = sample * gainSmooth * makeup;
+        }
+    }
 }
