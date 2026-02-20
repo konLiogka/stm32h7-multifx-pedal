@@ -196,6 +196,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 break;
 
             case displayView::PEDALSELECT_VIEW:
+                selectedPedal = loadedChain.getPedal(loadedChain.selectedPedal);
                 Display::drawBitmap(mod_pedal_bitmap, 0, 0);
                 displayPedalSettings(selectedPedal, 0);
                 potTouchedFlags = 0;
@@ -206,6 +207,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 Display::drawBitmap(base_chain_bitmap, 0, 0);
                 loadedChain.draw();
                 currentView = displayView::PEDALCHAIN_VIEW;
+                selectedPedal = loadedChain.getPedal(loadedChain.selectedPedal);
                 updateSelectedPedal(0);
                 break;
             default:
@@ -231,6 +233,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 selectedPedal = Pedal::createPedal(static_cast<PedalType>(newTypeIndex));
 
                 loadedChain.setPedal(loadedChain.selectedPedal, selectedPedal->getType());
+                selectedPedal = loadedChain.getPedal(loadedChain.selectedPedal);
                 displaySelectedPedal(selectedPedal);
             }
             else if (currentView == displayView::PEDALEDIT_VIEW)
