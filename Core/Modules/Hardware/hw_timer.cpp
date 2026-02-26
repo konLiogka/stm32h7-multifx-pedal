@@ -32,8 +32,8 @@ namespace Hardware
       HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
 
       htim8.Instance               = TIM8;
-      htim8.Init.Prescaler         = 149999;                           // 200MHz / 150000 = 1.333kHz
-      htim8.Init.Period            = 499;                             // 1.333kHz / 500 = 2,66Hz (37ms period)
+      htim8.Init.Prescaler         = 299999;                           // 200MHz / 300000 = 667Hz
+      htim8.Init.Period            = 499;                             // 667Hz / 500 = 1.334Hz (749ms period)
       htim8.Init.CounterMode       = TIM_COUNTERMODE_UP;
       htim8.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
       htim8.Init.RepetitionCounter = 0;
