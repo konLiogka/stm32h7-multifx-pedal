@@ -45,6 +45,7 @@ extern const Bitmap  base_chain_bitmap;
 extern const Bitmap  startup_screen_bitmap;
 extern const Bitmap  edit_pedal_bitmap;
 extern const Bitmap  mod_pedal_bitmap;
+extern const Bitmap  settings_bitmap;
 
 extern const Bitmap  overdrive_distortion_bitmap;
 extern const Bitmap  overdrive_distortion_disabled_bitmap;

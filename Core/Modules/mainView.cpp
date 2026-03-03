@@ -11,17 +11,17 @@
 #include "qspi_flash.hpp"
 #include <cstdio>
 
-#define SEL_VIEW_B      GPIO_PIN_0
-#define SETTINGS_VIEW_B GPIO_PIN_4
-#define SELECT_PEDAL_0  GPIO_PIN_6
-#define SELECT_PEDAL_1  GPIO_PIN_15
-#define SELECT_PEDAL_2  GPIO_PIN_10
-#define SELECT_PEDAL_3  GPIO_PIN_1
-#define PEDAL_0         GPIO_PIN_9
-#define PEDAL_1         GPIO_PIN_8
+#define SEL_VIEW_B GPIO_PIN_0
+#define SETTINGS_VIEW_B GPIO_PIN_5
+#define SELECT_PEDAL_0 GPIO_PIN_6
+#define SELECT_PEDAL_1 GPIO_PIN_15
+#define SELECT_PEDAL_2 GPIO_PIN_10
+#define SELECT_PEDAL_3 GPIO_PIN_1
+#define PEDAL_0 GPIO_PIN_9
+#define PEDAL_1 GPIO_PIN_8
 
 constexpr uint16_t BUFFER_SIZE = 2048;
-constexpr uint16_t HALF_BUFFER_SIZE  = (BUFFER_SIZE / 2);
+constexpr uint16_t HALF_BUFFER_SIZE = (BUFFER_SIZE / 2);
 
 __attribute__((section(".sram3"))) __attribute__((aligned(32)))
 uint16_t adc_buf[BUFFER_SIZE];
@@ -29,7 +29,7 @@ uint16_t adc_buf[BUFFER_SIZE];
 __attribute__((section(".sram3"))) __attribute__((aligned(32)))
 uint16_t dac_buf[BUFFER_SIZE];
 
-EffectsChain loadedChain;
+EffectsChain chain;
 
 volatile uint32_t potValues[3];
 uint8_t potTouchedFlags = 0; // one hot encoded : bit 0 = pot0, bit 1 = pot1, bit 2 = pot2
@@ -41,6 +41,7 @@ enum class displayView
     PEDALCHAIN_VIEW,
     PEDALSELECT_VIEW,
     PEDALEDIT_VIEW,
+    SETTINGS_VIEW
 };
 
 displayView currentView = displayView::PEDALCHAIN_VIEW;
@@ -67,8 +68,8 @@ static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
 
 void updateSelectedPedal(uint8_t index)
 {
-    selectedPedal = loadedChain.getPedal(index);
-    loadedChain.selectedPedal = index;
+    selectedPedal = chain.getPedal(index);
+    chain.selectedPedal = index;
 
     for (uint8_t x = 0; x < 128; x += 8)
     {
@@ -99,41 +100,24 @@ void mainApp(void)
         Display::printf("QSPI Flash: %d", err_code);
         Error_Handler();
     }
-    EffectsChain chain;
-    chain.setPedal(0, PedalType::PASS_THROUGH);
-    chain.setPedal(1, PedalType::PASS_THROUGH);
-    chain.setPedal(2, PedalType::PASS_THROUGH);
-    chain.setPedal(3, PedalType::PASS_THROUGH);
 
+    chain.clear();
 
-    err_code = QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR);
-
-    if (QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK)
-    {
-        Display::printf("QSPI erase Flash: %d", err_code);
-        Error_Handler();
-    }
-
-    err_code = QSPIFlash::saveEffectsChain(&chain);
-    if (QSPIFlash::saveEffectsChain(&chain) != HAL_OK)
-    {
-        Display::printf("QSPI save Flash: %d", err_code);
-        Error_Handler();
-    }
-
-    loadedChain.clear();
-
-    err_code = QSPIFlash::loadEffectsChain(&loadedChain);
+    err_code = QSPIFlash::loadEffectsChain(&chain);
     if (err_code != HAL_OK)
     {
+        chain.setPedal(0, PedalType::PASS_THROUGH);
+        chain.setPedal(1, PedalType::PASS_THROUGH);
+        chain.setPedal(2, PedalType::PASS_THROUGH);
+        chain.setPedal(3, PedalType::PASS_THROUGH);
         Display::printf("QSPI load Flash %d", err_code);
-        Error_Handler();
+        HAL_Delay(1000);
     }
 
     Display::drawBitmap(base_chain_bitmap, 0, 0);
-    loadedChain.draw();
-    loadedChain.selectedPedal = 0;
-    updateSelectedPedal(loadedChain.selectedPedal);
+    chain.draw();
+    chain.selectedPedal = 0;
+    updateSelectedPedal(chain.selectedPedal);
     currentView = displayView::PEDALCHAIN_VIEW;
 
     for (int i = 0; i < BUFFER_SIZE; i++)
@@ -161,8 +145,8 @@ extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        loadedChain.process(adc_buf, dac_buf, 0, HALF_BUFFER_SIZE);
-        SCB_CleanDCache_by_Addr((uint32_t *)dac_buf, 
+        chain.process(adc_buf, dac_buf, 0, HALF_BUFFER_SIZE);
+        SCB_CleanDCache_by_Addr((uint32_t *)dac_buf,
                                 HALF_BUFFER_SIZE * sizeof(uint16_t));
     }
 }
@@ -171,8 +155,8 @@ extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        loadedChain.process(adc_buf, dac_buf, HALF_BUFFER_SIZE, HALF_BUFFER_SIZE);
-        SCB_CleanDCache_by_Addr((uint32_t *)&dac_buf[HALF_BUFFER_SIZE], 
+        chain.process(adc_buf, dac_buf, HALF_BUFFER_SIZE, HALF_BUFFER_SIZE);
+        SCB_CleanDCache_by_Addr((uint32_t *)&dac_buf[HALF_BUFFER_SIZE],
                                 HALF_BUFFER_SIZE * sizeof(uint16_t));
     }
 }
@@ -196,7 +180,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 break;
 
             case displayView::PEDALSELECT_VIEW:
-                selectedPedal = loadedChain.getPedal(loadedChain.selectedPedal);
+                selectedPedal = chain.getPedal(chain.selectedPedal);
                 Display::drawBitmap(mod_pedal_bitmap, 0, 0);
                 displayPedalSettings(selectedPedal, 0);
                 potTouchedFlags = 0;
@@ -204,20 +188,22 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 break;
 
             case displayView::PEDALEDIT_VIEW:
-                Display::drawBitmap(base_chain_bitmap, 0, 0);
-                loadedChain.draw();
-                currentView = displayView::PEDALCHAIN_VIEW;
-                selectedPedal = loadedChain.getPedal(loadedChain.selectedPedal);
-                updateSelectedPedal(0);
-                break;
+                // Fallthrough
             default:
+                Display::drawBitmap(base_chain_bitmap, 0, 0);
+                chain.draw();
+                currentView = displayView::PEDALCHAIN_VIEW;
+                selectedPedal = chain.getPedal(0);
+                updateSelectedPedal(0);
                 break;
             }
             break;
         case SETTINGS_VIEW_B:
         {
+            Display::drawBitmap(settings_bitmap, 0, 0);
+            currentView = displayView::SETTINGS_VIEW;
             break;
-        }    
+        }
         case PEDAL_0:
             // Fallthrough
         case PEDAL_1:
@@ -232,8 +218,8 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
                 selectedPedal = Pedal::createPedal(static_cast<PedalType>(newTypeIndex));
 
-                loadedChain.setPedal(loadedChain.selectedPedal, selectedPedal->getType());
-                selectedPedal = loadedChain.getPedal(loadedChain.selectedPedal);
+                chain.setPedal(chain.selectedPedal, selectedPedal->getType());
+                selectedPedal = chain.getPedal(chain.selectedPedal);
                 displaySelectedPedal(selectedPedal);
             }
             else if (currentView == displayView::PEDALEDIT_VIEW)
@@ -250,7 +236,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
-                if (loadedChain.selectedPedal == 0)
+                if (chain.selectedPedal == 0)
                 {
                     togglePedal(0, selectedPedal);
                 }
@@ -262,27 +248,12 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             }
             break;
 
-        case SELECT_PEDAL_2:
-            switch (currentView)
-            {
-            case displayView::PEDALCHAIN_VIEW:
-                if (loadedChain.selectedPedal == 2)
-                {
-                    togglePedal(2, selectedPedal);
-                }
-                else
-                {
-                    updateSelectedPedal(2);
-                }
-                break;
-            }
-            break;
-
         case SELECT_PEDAL_1:
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
-                if (loadedChain.selectedPedal == 1)
+            {
+                if (chain.selectedPedal == 1)
                 {
                     togglePedal(1, selectedPedal);
                 }
@@ -292,13 +263,56 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 }
                 break;
             }
+            case displayView::SETTINGS_VIEW:
+                {
+                    HAL_ADC_Stop_DMA(&hadc1);
+                    HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
+                    HAL_TIM_Base_Stop_IT(&htim8); 
+
+                    err_code = QSPIFlash::erase_sector(CHAIN_STORAGE_ADDR);
+                    if (err_code != HAL_OK)
+                    {
+                        Display::printf("QSPI erase sector %d", err_code);
+                    }
+
+                    err_code = QSPIFlash::saveEffectsChain(&chain);
+                    if (err_code != HAL_OK)
+                    {
+                        Display::printf("QSPI save %d", err_code);
+                    }
+
+                    HAL_ADC_Start_DMA(&hadc1, reinterpret_cast<uint32_t *>(adc_buf), BUFFER_SIZE);
+                    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, reinterpret_cast<uint32_t *>(dac_buf), 
+                                    BUFFER_SIZE, DAC_ALIGN_12B_R);
+                    HAL_TIM_Base_Start_IT(&htim8); 
+                    break;
+                }
+            }
+            break;
+
+        case SELECT_PEDAL_2:
+            switch (currentView)
+            {
+                case displayView::PEDALCHAIN_VIEW:
+                {
+                    if (chain.selectedPedal == 2)
+                    {
+                        togglePedal(2, selectedPedal);
+                    }
+                    else
+                    {
+                        updateSelectedPedal(2);
+                    }
+                    break;
+                }
+                }
             break;
 
         case SELECT_PEDAL_3:
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
-                if (loadedChain.selectedPedal == 3)
+                if (chain.selectedPedal == 3)
                 {
                     togglePedal(3, selectedPedal);
                 }

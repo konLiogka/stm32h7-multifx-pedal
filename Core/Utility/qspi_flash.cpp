@@ -35,18 +35,15 @@ namespace QSPIFlash {
         cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
         cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
         
-        while (HAL_GetTick() - start_time < timeout) {
-            if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        do {
+            if (HAL_QSPI_Command(&hqspi, &cmd, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
                 return HAL_ERROR;
-            }
-            if (HAL_QSPI_Receive(&hqspi, &status, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+            if (HAL_QSPI_Receive(&hqspi, &status, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
                 return HAL_ERROR;
-            }
-            if (!(status & W25Q64_STATUS_BUSY)) {
+            if (!(status & W25Q64_STATUS_BUSY))
                 return HAL_OK;
-            }
-            HAL_Delay(1);
-        }
+        } while (HAL_GetTick() - start_time < timeout);   
+
         return HAL_TIMEOUT;
     }
 
@@ -262,26 +259,23 @@ namespace QSPIFlash {
         return HAL_OK;
     }
     
-    HAL_StatusTypeDef   saveEffectsChain(const EffectsChain* chain) {
-        if (!chain) {
-            return HAL_ERROR;
-        }
+    HAL_StatusTypeDef saveEffectsChain(const EffectsChain* chain) {
+        if (!chain) return HAL_ERROR;
 
-        uint8_t pedalData[NUM_PEDALS * PEDAL_LEN] = {};
+        static uint8_t pedalData[NUM_PEDALS * PEDAL_LEN];
+        memset(pedalData, 0, sizeof(pedalData));
+
         for (uint8_t i = 0; i < NUM_PEDALS; i++) {
             Pedal* pedal = chain->getPedal(i);
             PedalType type = pedal ? pedal->getType() : PedalType::PASS_THROUGH;
             pedalData[i * PEDAL_LEN] = static_cast<uint8_t>(type);
-
             if (pedal) {
                 float* params = reinterpret_cast<float*>(&pedalData[i * PEDAL_LEN + 1]);
                 pedal->getParams(params);
             }
         }
 
-        if (erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK) {
-            return HAL_ERROR;
-        }
+        if (erase_sector(CHAIN_STORAGE_ADDR) != HAL_OK) return HAL_ERROR;
         return write(CHAIN_STORAGE_ADDR, pedalData, sizeof(pedalData));
     }
 
