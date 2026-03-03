@@ -52,8 +52,17 @@ void displayPedalSettings(Pedal *pedal, uint8_t page)
 
         drawValBar(params[i + index], bitmap_x);
         Display::drawString(names[i + index], string_x, 11);
-        Display::printf(bitmap_x + 8 , 12, "%d", (int)(params[i + index]*100));
-
+        
+        float paramValue = params[i + index];
+        int displayValue;
+        
+        if (paramValue < 0.0f || paramValue > 1.0f) {
+            displayValue = 0;   
+        } else {
+            displayValue = (int)(paramValue * 100 + 0.5f);   
+        }
+        
+        Display::printf(bitmap_x + 8, 12, "%d", displayValue);
      }
     if (page == 0)
     {
