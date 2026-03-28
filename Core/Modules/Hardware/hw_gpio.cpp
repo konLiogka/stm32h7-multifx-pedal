@@ -10,25 +10,26 @@ namespace Hardware
     {
       /*
        * PA0 SELECT VIEW BUTTON
-       * PA1 PEDAL BUTTON 4
-       * PA2 POT 2
-       * PA3 POT 3
+
+       * PA2 POT 2 
+       * PA3 POT 3 
        * PA4 DAC OUT
-       * PA5 DISPLAY SPI SCK
-       * PA6 PEDAL BUTTON 1
-       * PA7 DISPLAY SPI SDA
-       * PA8 PEDAL 1
-       * PA9 PEDAL 0
-       * PA10 PEDAL BUTTON 3
-       * PA15 PEDAL BUTTON 2
+       * PE4 PEDAL BUTTON 1 
+       * PC13 PEDAL BUTTON 3 
+       * PE6 PEDAL BUTTON 2 
+       * PE5 PEDAL BUTTON 4 
+       * PA10 PEDAL 1 
+       * PD14 PEDAL 0 
        *
        * PB2 QUADSPI
        * PB6 QUADSPI
        *
        * PC0 POT 1
        * PC1 ADC IN
-       * PB5 SETTINGS BUTTON
+       * PA0 SETTINGS BUTTON 
        *
+       * PD6 DISPLAY SPI SDA 
+       * PD5 DISPLAY SPI SCK 
        * PD2 DISPLAY SPI CS
        * PD3 DISPLAY SPI RST
        * PD4 DISPLAY SPI DC
@@ -53,6 +54,15 @@ namespace Hardware
 
       HAL_NVIC_SetPriority(EXTI1_IRQn, 6, 0);
       HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+      HAL_NVIC_SetPriority(EXTI2_IRQn, 6, 0);
+      HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+      HAL_NVIC_SetPriority(EXTI3_IRQn, 6, 0);
+      HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+      HAL_NVIC_SetPriority(EXTI4_IRQn, 6, 0);
+      HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
       HAL_NVIC_SetPriority(EXTI9_5_IRQn, 6, 0);
       HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
@@ -86,7 +96,12 @@ namespace Hardware
       GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
       HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-      GPIO_InitStruct.Pin  = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_6 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15;
+      GPIO_InitStruct.Pin  =   GPIO_PIN_4 | GPIO_PIN_6 | GPIO_PIN_5 | GPIO_PIN_9  ;
+      GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+      GPIO_InitStruct.Pull = GPIO_PULLUP;
+      HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+      GPIO_InitStruct.Pin  =  GPIO_PIN_0 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15;
       GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
       GPIO_InitStruct.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -103,17 +118,15 @@ namespace Hardware
       GPIO_InitStruct.Pull = GPIO_NOPULL;
       HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-
-      GPIO_InitStruct.Pin  = GPIO_PIN_5;
-      GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-      GPIO_InitStruct.Pull = GPIO_PULLUP;
-      HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
       GPIO_InitStruct.Pin  = GPIO_PIN_0 | GPIO_PIN_1;
       GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
       GPIO_InitStruct.Pull = GPIO_NOPULL;
       HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+      GPIO_InitStruct.Pin  =   GPIO_PIN_7 | GPIO_PIN_13  ;
+      GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+      GPIO_InitStruct.Pull = GPIO_PULLUP;
+      HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
       GPIO_InitStruct.Pin   = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4;
       GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
@@ -123,6 +136,12 @@ namespace Hardware
 
       GPIO_InitStruct.Pin  = GPIO_PIN_1;
       GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+      GPIO_InitStruct.Pull = GPIO_PULLUP;
+      HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+
+      GPIO_InitStruct.Pin  = GPIO_PIN_14;
+      GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
       GPIO_InitStruct.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
