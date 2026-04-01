@@ -37,6 +37,7 @@ target_link_libraries(dsp_overdrive PRIVATE m)
 
 target_include_directories(dsp_overdrive PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Core/Effects>
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Core/Utility>
     $<INSTALL_INTERFACE:include>
 )
 

@@ -27,23 +27,23 @@
 ## Export macros
 
 ```bash
-export DSP_PROJECT_ROOT="$(pwd)" \
-export DSP_BUILD_DIR="$DSP_PROJECT_ROOT/Build" \
-export DSP_SCRIPTS_DIR="$DSP_PROJECT_ROOT/Scripts" \
+export DSP_PROJECT_ROOT="$(pwd)" 
+export DSP_BUILD_DIR="$DSP_PROJECT_ROOT/Build" 
+export DSP_SCRIPTS_DIR="$DSP_PROJECT_ROOT/Scripts" 
 export DSP_CORE_DIR="$DSP_PROJECT_ROOT/Core/Effects"
 ```
 
 ## Build DSP
 
 ```bash
-cmake -B "$DSP_BUILD_DIR" -DCMAKE_BUILD_TYPE=Release \
+cmake -B "$DSP_BUILD_DIR" -DCMAKE_BUILD_TYPE=Release 
 cmake --build "$DSP_BUILD_DIR"  --parallel $(nproc) 
 ``` 
 
 ## Generate ctypesgen
 
 ```bash
-ctypesgen "$DSP_CORE_DIR/dsp.hpp" -l "$DSP_BUILD_DIR/libdsp_overdrive.so" -o "$DSP_SCRIPTS_DIR/dsp_bindings.py" --no-macro-warnings
+ctypesgen "$DSP_CORE_DIR/dsp.hpp" -l "$DSP_BUILD_DIR/libdsp_overdrive.so" -o "$DSP_SCRIPTS_DIR/dsp_bindings.py" --no-macro-warnings --cpp="g++ -E"
 ```
 
 ## Run Python script
