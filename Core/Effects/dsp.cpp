@@ -1,117 +1,258 @@
 #include "dsp.hpp"
 #include "common.hpp"
 #include <cmath>
-
-typedef struct {
-    float prev_in;
-    float prev_out;
-} HPF_State;
-
-typedef struct {
-    float prev_out;
-} LPF_State;
+ 
 
 
-struct CombFilterState {
+namespace Config
+{
+    constexpr float    SAMPLE_RATE     = 96000.0f;
+    constexpr float    SAMPLE_RATE_MS  = SAMPLE_RATE * 0.001f;
+
+    constexpr uint32_t ECHO_BUFFER_SIZE = 32768;
+    constexpr float    ECHO_FEEDBACK_GAMMA = 0.7f;
+    constexpr float    ECHO_MIN_DELAY_MS   = 20.0f;
+    constexpr float    ECHO_MAX_DELAY_MS   = 680.0f;
+
+    constexpr uint8_t  NUM_COMBS    = 8;
+    constexpr uint8_t  NUM_ALLPASS  = 4;
+    constexpr float    ALLPASS_FEEDBACK = 0.5f;
+
+    constexpr std::array<uint32_t, NUM_COMBS> COMB_DELAYS = {
+        3163, 3617, 4013, 4409, 4801, 5209, 5597, 6007
+    };
+    constexpr std::array<uint32_t, NUM_ALLPASS> ALLPASS_DELAYS = {
+        556, 441, 341, 225
+    };
+
+    constexpr float MIN_HOLD_MS    = 10.0f;
+    constexpr float MAX_HOLD_MS    = 500.0f;
+    constexpr float MIN_ATTACK_MS  = 1.0f;    
+    constexpr float MAX_ATTACK_MS  = 100.0f;   
+    constexpr float MIN_RELEASE_MS = 10.0f;   
+    constexpr float MAX_RELEASE_MS = 1000.0f;
+    
+    constexpr float ATTACK_COEFF = 0.989958f;
+    
+    constexpr float COMPRESSOR_ATTACK_COEFF = 0.999f;
+    constexpr float COMPRESSOR_RELEASE_COEFF = 0.9998f;
+}
+
+
+struct HpfState
+{
+    float prevIn = 0.0f;
+    float prevOut = 0.0f;
+
+    float process(float sample, float tone = 0.995f)
+    {
+        float hp_out = sample - prevIn + tone * prevOut;
+        prevIn = sample;
+        prevOut = hp_out;
+        return hp_out;
+    }
+};
+
+struct LpfState
+{
+    float prevOut = 0.0f;
+
+    float process(float sample, float tone)
+    {
+        float lp_out = tone * sample + (1.0f - tone) * prevOut;
+        prevOut = lp_out;
+        
+        float highs = sample - lp_out;
+        float presence = tone * 0.4f;
+        
+        return lp_out + highs * presence;
+    }
+};
+
+struct CombFilterState
+{
     std::array<float, 6008> buffer{};
-    uint32_t position{};
-    float filterState{};
+    uint32_t position = 0;
+    float filterState = 0.0f;
+
+    float process(float input, uint32_t delayLength, float feedback, float damping)
+    {
+        const float delayed = buffer[position];
+        const float filtered = filterState * damping + delayed * (1.0f - damping);
+        filterState = filtered;
+        buffer[position] = input + filtered * feedback;
+        
+        position = (position + 1);
+        if (position >= delayLength) position = 0;
+        
+        return delayed;
+    }
+    
 };
 
-struct AllpassFilterState {
+struct AllpassFilterState
+{
     std::array<float, 560> buffer{};
-    uint32_t position{};
-};
+    uint32_t position = 0;
 
-
-// Echo
-constexpr uint32_t BUFFER_SIZE = 32768;
-constexpr float SAMPLE_RATE    = 96000.0f;
-constexpr float GAMMA          = 0.7f;
-constexpr uint8_t NUM_COMBS    = 8;
-constexpr uint8_t NUM_ALLPASS  = 4;
-
-std::array<float, BUFFER_SIZE>  delayBuffer{};
-static    uint32_t writePos         = 0;
-static    float feedbackFilterState = 0.0f;
-
-constexpr float minDelayMs       = 20.0f;
-constexpr float maxDelayMs       = 680.0f;
-
-constexpr std::array<uint32_t, NUM_COMBS> combDelays = {
-    3163, 3617, 4013, 4409, 4801, 5209, 5597, 6007
-};
-
-constexpr std::array<uint32_t, NUM_ALLPASS> allpassDelays = {
-    556, 441, 341, 225
-};
-
-// Reverb
-constexpr float allpassFeedback = 0.5f;
-
-// Noise gate
-constexpr float minHoldMs    = 10.0f;
-constexpr float maxHoldMs    = 500.0f;
-constexpr float sampleRateMs = SAMPLE_RATE * 0.001f;
-
-constexpr float minReleaseMs    = 5.0f;
-constexpr float maxReleaseMs    = 500.0f;
-constexpr float attackCoeff     = 0.989958f;
-
-static std::array<CombFilterState, NUM_COMBS> combFilters{};
-static std::array<AllpassFilterState, NUM_ALLPASS> allpassFilters{};
-
-float lowPassFilter(float sample, float tone, LPF_State* state)
-{
-    float lp_out = tone * sample + (1.0f - tone) * state->prev_out;
-    state->prev_out = lp_out;
-
-    float highs = sample - lp_out;
-
-    float presence = tone * 0.4f;
-
-    return lp_out + highs * presence;
-}
-
-float highPassFilter(float sample, HPF_State* state)
-{
-    float hp_out = sample - state->prev_in + 0.995f * state->prev_out;
-
-    state->prev_in  = sample;
-    state->prev_out = hp_out;
-
-    return hp_out;
-}
-
-float combFilter(float input, float* buffer, uint32_t BUFFER_SIZE, 
-                 uint32_t* position, float* filterState, 
-                 float feedback, float damping)
-{
-    const float delayed = buffer[*position];
-    const float filtered = (*filterState) * damping + delayed * (1.0f - damping);
-    *filterState = filtered;
-    buffer[*position] = input + filtered * feedback;
+    float process(float input, uint32_t delayLength, float feedback)
+    {
+        const float delayed = buffer[position];
+        const float input_ap = input;
+        
+        float output = -input_ap + delayed;
+        buffer[position] = input_ap + feedback * delayed;
+        
+        position = (position + 1);
+        if (position >= delayLength) position = 0;
+        
+        return output;
+    }
     
-    *position = (*position + 1);
-    if (*position >= BUFFER_SIZE) *position = 0;
+   
+};
+
+struct EchoState
+{
+    std::array<float, Config::ECHO_BUFFER_SIZE> buffer{};
+    uint32_t writePos = 0;
+    float feedbackFilterState = 0.0f;
+
+    float process(float input, uint32_t delaySamples, float feedback, float gamma, float mix)
+    {
+        uint32_t readPos = (writePos + Config::ECHO_BUFFER_SIZE - delaySamples) & (Config::ECHO_BUFFER_SIZE - 1);
+        float delayedSample = buffer[readPos];
+        
+        feedbackFilterState = feedbackFilterState * gamma + delayedSample * (1.0f - gamma);
+
+        buffer[writePos] = input + feedbackFilterState * feedback;
+        
+        writePos = (writePos + 1) & (Config::ECHO_BUFFER_SIZE - 1);
+        
+        return (1.0f - mix) * input + mix * delayedSample;
+    }
     
-    return delayed;
-}
+    void reset()
+    {
+        buffer.fill(0.0f);
+        writePos = 0;
+        feedbackFilterState = 0.0f;
+    }
+};
+
+struct NoiseGateState
+{
+    float envelope = 0.0f;
+    float gainSmooth = 0.0f;
+    uint32_t holdCounter = 0;
+    
+    float process(float input, float thresholdAmp, uint32_t holdSamples, 
+                  float attackCoeff, float releaseCoeff)
+    {
+        float rectified = fabsf(input);
+        envelope = envelope * 0.999f + rectified * 0.001f;
+        
+        float targetGain = 0.0f;
+        
+        if (envelope > thresholdAmp)
+        {
+            holdCounter = holdSamples;
+            targetGain = 1.0f;
+        }
+        else
+        {
+            if (holdCounter > 0)
+            {
+                holdCounter--;
+                targetGain = 1.0f;
+            }
+            else
+            {
+                targetGain = 0.0f;
+            }
+        }
+        
+        if (targetGain > gainSmooth)
+        {
+            gainSmooth = gainSmooth * attackCoeff + targetGain * (1.0f - attackCoeff);
+        }
+        else
+        {
+            gainSmooth = gainSmooth * releaseCoeff + targetGain * (1.0f - releaseCoeff);
+        }
+        
+        return input * gainSmooth;
+    }
+    
+    void reset()
+    {
+        envelope = 0.0f;
+        gainSmooth = 0.0f;
+        holdCounter = 0;
+    }
+};
+
+ 
+struct CompressorState
+{
+    float envelope = 0.0f;
+    float gainSmooth = 1.0f;
+    
+    float process(float input, float thresholdLin, float compression, 
+                  float makeup, float attackCoeff, float releaseCoeff)
+    {
+        float rectified = fabsf(input);
+        
+        if (rectified > envelope)
+            envelope = envelope * attackCoeff + rectified * (1.0f - attackCoeff);
+        else
+            envelope = envelope * releaseCoeff + rectified * (1.0f - releaseCoeff);
+        
+        float targetGain = 1.0f;
+        
+        if (envelope > thresholdLin)
+        {
+            float overshoot = (envelope - thresholdLin) * (1.0f / thresholdLin);
+            float reduction = 1.0f + overshoot * compression;
+            targetGain = 1.0f / reduction;
+        }
+        
+        if (targetGain < gainSmooth)
+            gainSmooth = gainSmooth * attackCoeff + targetGain * (1.0f - attackCoeff);
+        else
+            gainSmooth = gainSmooth * releaseCoeff + targetGain * (1.0f - releaseCoeff);
+        
+        return input * gainSmooth * makeup;
+    }
+    
+    void reset()
+    {
+        envelope = 0.0f;
+        gainSmooth = 1.0f;
+    }
+};
+    
+
+
+static std::array<CombFilterState, Config::NUM_COMBS> combFilters{};
+static std::array<AllpassFilterState, Config::NUM_ALLPASS> allpassFilters{};
+static EchoState echoState{};
+static NoiseGateState noiseGateState{};
+static CompressorState compressorState{};
 
 namespace DSP
 {
     void applyOverdrive(float *input, float *output, uint16_t length,
                         float gain, float tone, float level)
     {
-        static HPF_State hpf_state = {0.0f, 0.0f};
-        static LPF_State lpf_state = {0.0f};
+        static HpfState hpfState{};
+        static LpfState lpfState{};
 
         for (uint16_t i = 0; i < length; i++)
         {
             float sample = input[i];
 
-            sample = highPassFilter(sample, &hpf_state);
-
+            sample = hpfState.process(sample, 0.995f);
             sample *= (1.0f + gain * 49.0f);
 
             if (sample > 1.0f)
@@ -127,7 +268,7 @@ namespace DSP
                 sample = tanhf(sample * 1.5f);
             }
 
-            sample = lowPassFilter(sample, tone, &lpf_state);
+            sample = lpfState.process(sample, tone);
 
             output[i] = sample * level * 1.5f;
         }
@@ -140,24 +281,15 @@ namespace DSP
         feedback  = clamp(feedback, 0.0f, 0.95f);
         mix       = clamp(mix, 0.0f, 1.0f);
 
-        float delayMs = minDelayMs + delayTime * (maxDelayMs - minDelayMs);
-        const uint32_t delay_samples = std::min(
-            static_cast<uint32_t>((delayMs / 1000.0f) * SAMPLE_RATE),
-            BUFFER_SIZE - 1);
+        float delayMs = Config::ECHO_MIN_DELAY_MS + delayTime * (Config::ECHO_MAX_DELAY_MS - Config::ECHO_MIN_DELAY_MS);
+        const uint32_t delaySamples = std::min(
+            static_cast<uint32_t>((delayMs / 1000.0f) * Config::SAMPLE_RATE),
+            Config::ECHO_BUFFER_SIZE - 1);
 
         for (uint16_t i = 0; i < length; ++i)
         {
-            float x_n = input[i];
-
-            uint32_t readPos       = (writePos + BUFFER_SIZE - delay_samples) & (BUFFER_SIZE - 1);
-            float    delayedSample = delayBuffer[readPos];
-
-            feedbackFilterState   = feedbackFilterState * GAMMA + delayedSample * (1.0f - GAMMA);
-            delayBuffer[writePos] = x_n + feedbackFilterState * feedback;
-
-            writePos = (writePos + 1) & (BUFFER_SIZE - 1);
-
-            output[i] = (1.0f - mix) * x_n + mix * delayedSample;
+            output[i] = echoState.process(input[i], delaySamples, feedback, 
+                                         Config::ECHO_FEEDBACK_GAMMA, mix);
         }
     }
 
@@ -172,32 +304,21 @@ namespace DSP
 
         for (uint16_t i = 0; i < length; ++i)
         {
-            const float x_n    = input[i];
+            const float x_n = input[i];
             float reverbSignal = 0.0f;
 
-            for (size_t c = 0; c < NUM_COMBS; ++c)
+            for (size_t c = 0; c < Config::NUM_COMBS; ++c)
             {
-                auto &comb = combFilters[c];
-                const float combOut = combFilter(x_n, comb.buffer.data(), combDelays[c],
-                                                 &comb.position, &comb.filterState,
-                                                 combFeedback, damping);
-                reverbSignal += combOut;
+                reverbSignal += combFilters[c].process(x_n, Config::COMB_DELAYS[c], 
+                                                       combFeedback, damping);
             }
 
             reverbSignal *= 0.125f;
 
-            for (size_t a = 0; a < NUM_ALLPASS; ++a)
+            for (size_t a = 0; a < Config::NUM_ALLPASS; ++a)
             {
-                auto  &allpass             = allpassFilters[a];
-                const uint32_t delayLength = allpassDelays[a];
-
-                const float delayed  = allpass.buffer[allpass.position];
-                const float input_ap = reverbSignal;
-
-                reverbSignal                     = -input_ap + delayed;
-                allpass.buffer[allpass.position] = input_ap + allpassFeedback * delayed;
-
-                allpass.position = (allpass.position + 1) < delayLength ? (allpass.position + 1) : 0;
+                reverbSignal = allpassFilters[a].process(reverbSignal, Config::ALLPASS_DELAYS[a], 
+                                                        Config::ALLPASS_FEEDBACK);
             }
 
             output[i] = (1.0f - mix) * x_n + mix * reverbSignal;
@@ -205,108 +326,56 @@ namespace DSP
     }
 
     void applyNoiseGate(float *input, float *output, uint16_t length,
-                        float threshold, float hold, float release)
+                        float threshold, float attack, float hold, float release)
     {
         threshold = clamp(threshold, 0.0f, 1.0f);
+        attack    = clamp(attack, 0.0f, 1.0f);
         hold      = clamp(hold, 0.0f, 1.0f);
         release   = clamp(release, 0.0f, 1.0f);
 
-        float    thresholdAmp = powf(10.0f, -3.0f + threshold * 2.5f);
-        float    holdMs       = minHoldMs + hold * (maxHoldMs - minHoldMs);
-        uint32_t holdSamples  = (uint32_t)(holdMs * sampleRateMs);
-
-        float releaseMs    = minReleaseMs + release * (maxReleaseMs - minReleaseMs);
-        float releaseCoeff = expf(-1000.0f / (releaseMs * SAMPLE_RATE));
-
-        static float envelope       = 0.0f;
-        static float gainSmooth     = 0.0f;
-        static uint32_t holdCounter = 0;
+        float thresholdAmp = powf(10.0f, -3.0f + threshold * 2.5f);
+        
+        float attackMs = Config::MIN_ATTACK_MS + attack * (Config::MAX_ATTACK_MS - Config::MIN_ATTACK_MS);
+        float attackCoeff = expf(-1000.0f / (attackMs * Config::SAMPLE_RATE));
+        
+        float holdMs = Config::MIN_HOLD_MS + hold * (Config::MAX_HOLD_MS - Config::MIN_HOLD_MS);
+        uint32_t holdSamples = static_cast<uint32_t>(holdMs * Config::SAMPLE_RATE_MS);
+        
+        float releaseMs = Config::MIN_RELEASE_MS + release * (Config::MAX_RELEASE_MS - Config::MIN_RELEASE_MS);
+        float releaseCoeff = expf(-1000.0f / (releaseMs * Config::SAMPLE_RATE));
 
         for (uint16_t i = 0; i < length; ++i)
         {
-            float x_n = input[i];
-
-            float rectified = fabsf(x_n);
-            envelope = envelope * 0.999f + rectified * 0.001f;
-
-            float targetGain = 0.0f;
-
-            if (envelope > thresholdAmp)
-            {
-                holdCounter = holdSamples;
-                targetGain = 1.0f;
-            }
-            else
-            {
-                if (holdCounter > 0)
-                {
-                    holdCounter--;
-                    targetGain = 1.0f;
-                }
-                else
-                {
-                    targetGain = 0.0f;
-                }
-            }
-
-            if (targetGain > gainSmooth)
-            {
-                gainSmooth = gainSmooth * attackCoeff + targetGain * (1.0f - attackCoeff);
-            }
-            else
-            {
-                gainSmooth = gainSmooth * releaseCoeff + targetGain * (1.0f - releaseCoeff);
-            }
-
-            output[i] = x_n * gainSmooth;
+            output[i] = noiseGateState.process(input[i], thresholdAmp, holdSamples,
+                                            attackCoeff, releaseCoeff);
         }
     }
 
     void applyCompressor(float *input, float *output, uint16_t length,
-                         float threshold, float ratio, float makeupGain)
+                        float threshold, float ratio, float makeupGain, 
+                        float attack, float release)
     {
-        threshold = clamp(threshold, 0.0f, 1.0f);
-        ratio = clamp(ratio, 0.0f, 1.0f);
+        threshold  = clamp(threshold, 0.0f, 1.0f);
+        ratio      = clamp(ratio, 0.0f, 1.0f);
         makeupGain = clamp(makeupGain, 0.0f, 1.0f);
-
-        static float envelope = 0.0f;
-        static float gainSmooth = 1.0f;
+        attack     = clamp(attack, 0.0f, 1.0f);
+        release    = clamp(release, 0.0f, 1.0f);
 
         float thresholdLin = 0.001f + threshold * 0.3f;
-
         float compression = ratio * 2.5f;
-
         float makeup = 1.0f + makeupGain * 8.0f;
-
-        const float attackCoeff = 0.999f;
-        const float releaseCoeff = 0.9998f;
+        
+        float attackMs = Config::MIN_ATTACK_MS + attack * (Config::MAX_ATTACK_MS - Config::MIN_ATTACK_MS);
+        float releaseMs = Config::MIN_RELEASE_MS + release * (Config::MAX_RELEASE_MS - Config::MIN_RELEASE_MS);
+        float attackCoeff = expf(-1000.0f / (attackMs * Config::SAMPLE_RATE));
+        float releaseCoeff = expf(-1000.0f / (releaseMs * Config::SAMPLE_RATE));
 
         for (uint16_t i = 0; i < length; ++i)
         {
-            float sample = input[i];
-
-            float rectified = fabsf(sample);
-
-            if (rectified > envelope)
-                envelope = envelope * attackCoeff + rectified * (1.0f - attackCoeff);
-            else
-                envelope = envelope * releaseCoeff + rectified * (1.0f - releaseCoeff);
-
-            float targetGain = 1.0f;
-
-            if (envelope > thresholdLin)
-            {
-                float overshoot = (envelope - thresholdLin) * (1.0f / thresholdLin);
-                float reduction = 1.0f + overshoot * compression;
-                targetGain = 1.0f / reduction;
-            }
-
-            if (targetGain < gainSmooth)
-                gainSmooth = gainSmooth * attackCoeff + targetGain * (1.0f - attackCoeff);
-            else
-                gainSmooth = gainSmooth * releaseCoeff + targetGain * (1.0f - releaseCoeff);
-
-            output[i] = sample * gainSmooth * makeup;
+            output[i] = compressorState.process(input[i], thresholdLin, compression, makeup,
+                                            attackCoeff, releaseCoeff);
         }
     }
+    
+   
 }

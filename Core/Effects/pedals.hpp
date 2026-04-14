@@ -18,58 +18,75 @@ enum class PedalType {
 
 constexpr uint8_t pedalType_size = static_cast<size_t>(PedalType::PASS_THROUGH) + 1;
 
+
+template<typename T>
+void setParams(T& params, float* values) {
+    float* ptr = reinterpret_cast<float*>(&params);
+    for (size_t i = 0; i < sizeof(T) / sizeof(float); ++i) {
+        ptr[i] = values[i];
+    }
+}
+
+template<typename T>
+void getParams(const T& params, float* values) {
+    const float* ptr = reinterpret_cast<const float*>(&params);
+    for (size_t i = 0; i < sizeof(T) / sizeof(float); ++i) {
+        values[i] = ptr[i];
+    }
+}
+
 class Pedal {
 public:
     Pedal(PedalType t)
         : type(t), 
           image(getBitmapForType(t)), 
-          disabled_image(getDisabledBitmapForType(t)),
+          image_disabled(getDisabledBitmapForType(t)),
           name(getNameForType(t)) {}
 
     virtual ~Pedal() {}
     
-    float volume = 0.5f;
-
-    const Bitmap& getImage() const { return enabled ? image : disabled_image; }
+    const Bitmap& getImage() const { return enabled ? image : image_disabled; }
     PedalType getType() const { return type; }
     const char* getName() const { return name; }
     virtual const char* const* getMemberNames() const { return nullptr; }
     virtual uint8_t getMemberSize() const { return 0; }
-    virtual void setParams(float* params) { volume = params[0]; }
-    virtual void getParams(float* params) const { params[0] = volume; }
-    virtual float getParamValue(uint8_t index) const { return (index == 0) ? volume : 0.0f; }
+    
+    virtual void set(float* values) = 0;
+    virtual void get(float* values) const = 0;
 
     static Pedal* createPedal(PedalType type);
-    virtual void process(float* input, float* output, uint16_t length);
+    virtual void process(float* input, float* output, uint16_t length) = 0;
     virtual bool isEnabled() const { return enabled; }
     virtual void setEnabled(bool state) { enabled = state; } 
 
 protected:
     PedalType type;
     Bitmap image;
-    Bitmap disabled_image;
+    Bitmap image_disabled;
     const char* name;
     bool enabled = true;
 
 private:
     static const Bitmap& getBitmapForType(PedalType type);
-    static const Bitmap& getDisabledBitmapForType(PedalType type) ;
+    static const Bitmap& getDisabledBitmapForType(PedalType type);
     static const char* getNameForType(PedalType type);
 };
 
-// Distortion/Overdrive pedals
 class DistortionPedal : public Pedal {
 public:
     DistortionPedal() : Pedal(PedalType::OVERDRIVE_DISTORTION) {
-        volume = 0.5f;
-        gain = 0.5f;
-        tone = 0.2f;
-        level = 0.6f;
+        params.volume = 0.5f;
+        params.gain = 0.5f;
+        params.tone = 0.2f;
+        params.level = 0.6f;
     }
 
-    float gain;
-    float tone;
-    float level;
+    struct {
+        float volume;
+        float gain;
+        float tone;
+        float level;
+    } params;
 
     static constexpr const char* memberNames[] = {"Vol", "Gain", "Tone", "Level"};
     static constexpr uint8_t member_size = array_size(memberNames);
@@ -77,25 +94,27 @@ public:
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
 
-    void setParams(float* params) override;
-    void getParams(float* params) const override;
+    void set(float* values) override { setParams(params, values); }
+    void get(float* values) const override { getParams(params, values); }
 
     void process(float* input, float* output, uint16_t length) override;
 };
 
-// Echo/Delay pedals
 class EchoPedal : public Pedal {
 public:
     EchoPedal() : Pedal(PedalType::ECHO) {
-        volume = 1.0f;
-        delayTime = 0.5f;
-        feedback = 0.5f;
-        mix = 0.5f;
+        params.volume = 1.0f;
+        params.delayTime = 0.3f;
+        params.feedback = 0.4f;
+        params.mix = 0.5f;
     }
     
-    float delayTime;
-    float feedback;
-    float mix;
+    struct {
+        float volume;
+        float delayTime;
+        float feedback;
+        float mix;
+    } params;
 
     static constexpr const char* memberNames[] = {"Vol", "Delay", "Fdbck", "Mix"};
     static constexpr uint8_t member_size = array_size(memberNames);
@@ -103,8 +122,8 @@ public:
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
 
-    void setParams(float* params) override;
-    void getParams(float* params) const override;
+    void set(float* values) override { setParams(params, values); }
+    void get(float* values) const override { getParams(params, values); }
 
     void process(float* input, float* output, uint16_t length) override;
 };
@@ -113,14 +132,18 @@ public:
 class ReverbPedal : public Pedal {
 public:
     ReverbPedal() : Pedal(PedalType::REVERB) {
-        volume = 1.0f;
-        depth  = 0.5f;
-        rate   = 0.5f;
-        mix    = 0.5f;
+        params.volume = 1.0f;
+        params.roomSize = 0.5f;
+        params.damping = 0.5f;
+        params.mix = 0.5f;
     }
-    float depth;
-    float rate;
-    float mix;
+    
+    struct {
+        float volume;
+        float roomSize;
+        float damping;
+        float mix;
+    } params;
 
     static constexpr const char* memberNames[] = {"Vol", "Depth", "Rate", "Mix"};
     static constexpr uint8_t member_size = array_size(memberNames);
@@ -128,8 +151,8 @@ public:
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
     
-    void setParams(float* params) override;
-    void getParams(float* params) const override;
+    void set(float* values) override { setParams(params, values); }
+    void get(float* values) const override { getParams(params, values); }
 
     void process(float* input, float* output, uint16_t length) override;
 };
@@ -137,24 +160,29 @@ public:
 class NoiseGatePedal : public Pedal {
 public:
     NoiseGatePedal() : Pedal(PedalType::NOISE_GATE) {
-        volume    = 1.0f;
-        threshold = 0.5f;
-        hold      = 0.5f;
-        release   = 0.5f;
+        params.volume = 1.0f;
+        params.threshold = 0.5f;
+        params.attack = 0.5f;
+        params.hold = 0.5f;
+        params.release = 0.5f;
     }
     
-    float threshold;
-    float hold;
-    float release;
+    struct {
+        float volume;
+        float threshold;
+        float attack;
+        float hold;
+        float release;
+    } params;
 
-    static constexpr const char* memberNames[] = {"Vol", "Trshld", "Hold", "Rel" };
+    static constexpr const char* memberNames[] = {"Vol", "Trshld", "Atk", "Hold", "Rel"};
     static constexpr uint8_t member_size = array_size(memberNames);
 
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
 
-    void setParams(float* params) override;
-    void getParams(float* params) const override;
+    void set(float* values) override { setParams(params, values); }
+    void get(float* values) const override { getParams(params, values); }
 
     void process(float* input, float* output, uint16_t length) override;
 };
@@ -162,24 +190,31 @@ public:
 class CompressorPedal : public Pedal {
 public:
     CompressorPedal() : Pedal(PedalType::COMPRESSOR) {
-        volume    = 1.0f;
-        threshold = 0.5f;
-        ratio      = 0.5f;
-        makeupGain   = 0.5f;
+        params.volume = 1.0f;
+        params.threshold = 0.5f;
+        params.ratio = 0.5f;
+        params.makeupGain = 0.5f;
+        params.attack = 0.5f;
+        params.release = 0.5f;
     }
     
-    float threshold;
-    float ratio;
-    float makeupGain;
+    struct {
+        float volume;
+        float threshold;
+        float ratio;
+        float makeupGain;
+        float attack;
+        float release;
+    } params;
 
-    static constexpr const char* memberNames[] = {"Vol", "Trshld", "Ratio", "Gain" };
+    static constexpr const char* memberNames[] = {"Vol", "Trshld", "Ratio","Gain", "Atk", "Rel"};
     static constexpr uint8_t member_size = array_size(memberNames);
 
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
 
-    void setParams(float* params) override;
-    void getParams(float* params) const override;
+    void set(float* values) override { setParams(params, values); }
+    void get(float* values) const override { getParams(params, values); }
 
     void process(float* input, float* output, uint16_t length) override;
 };
@@ -187,24 +222,27 @@ public:
 class PassThroughPedal : public Pedal {
 public:
     PassThroughPedal() : Pedal(PedalType::PASS_THROUGH) {
-        highs  = 1.0f;
-        lows   = 1.0f;
-        mids   = 1.0f;
-        volume = 1.0f;
+        params.highs = 1.0f;
+        params.mids = 1.0f;
+        params.lows = 1.0f;
+        params.volume = 1.0f;
     }
     
-    float highs;
-    float mids;
-    float lows;
+    struct {
+        float highs;
+        float mids;
+        float lows;
+        float volume;
+    } params;
 
-    static constexpr const char* memberNames[] = { "Highs", "Mids", "Lows", "Vol"};
+    static constexpr const char* memberNames[] = {"Highs", "Mids", "Lows", "Vol"};
     static constexpr uint8_t member_size = array_size(memberNames);
 
     const char* const* getMemberNames() const override { return memberNames; }
     uint8_t getMemberSize() const override { return member_size; }
     
-    void setParams(float* params) override ;
-    void getParams(float* params) const override ;
+    void set(float* values) override { setParams(params, values); }
+    void get(float* values) const override { getParams(params, values); }
     
     void process(float* input, float* output, uint16_t length) override;
 };

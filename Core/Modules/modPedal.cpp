@@ -35,7 +35,7 @@ void displayPedalSettings(Pedal *pedal, uint8_t page)
 
     const char* const* names = pedal->getMemberNames();
     float* params = new float[pedal->getMemberSize()];
-    pedal->getParams(params);
+    pedal->get(params);
     uint8_t numParams = pedal->getMemberSize();
     uint8_t char_width = 6;
     uint8_t index = 0;

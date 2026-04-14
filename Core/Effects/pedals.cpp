@@ -70,153 +70,72 @@ Pedal* Pedal::createPedal(PedalType type) {
     }
 }
 
-void DistortionPedal::setParams(float* params) {
-    volume = params[0];
-    gain   = params[1];
-    tone   = params[2];
-    level  = params[3];
-}
-
-void DistortionPedal::getParams(float* params) const {
-    params[0] = volume;    
-    params[1] = gain;     
-    params[2] = tone;     
-    params[3] = level;     
-}
-
-void EchoPedal::setParams(float* params) {
-    volume    = params[0];
-    delayTime = params[1];
-    feedback  = params[2];
-    mix       = params[3];
-}
-
-void EchoPedal::getParams(float* params) const {
-    params[0] = volume;   
-    params[1] = delayTime;  
-    params[2] = feedback;  
-    params[3] = mix;       
-}
-
-void ReverbPedal::setParams(float* params) {
-    volume = params[0];
-    depth  = params[1];
-    rate   = params[2];
-    mix    = params[3];
-}
-
-void ReverbPedal::getParams(float* params) const {
-    params[0] = volume; 
-    params[1] = depth;  
-    params[2] = rate; 
-    params[3] = mix;   
-}
-
-void PassThroughPedal::setParams(float* params) {
-    highs  = params[0];
-    mids   = params[1];
-    lows   = params[2]; 
-    volume = params[3];
-}
-
-void PassThroughPedal::getParams(float* params) const {
-    params[0] = highs;   
-    params[1] = mids;   
-    params[2] = lows;  
-    params[3] = volume; 
-}
-
-void NoiseGatePedal::setParams(float* params) {
-    volume    = params[0];
-    threshold = params[1];
-    hold      = params[2];
-    release   = params[3];
-}
-
-void NoiseGatePedal::getParams(float* params) const {
-    params[0] = volume;   
-    params[1] = threshold;   
-    params[2] = hold;  
-    params[3] = release;  
-}
-
-void CompressorPedal::setParams(float* params) {
-    volume    = params[0];
-    threshold = params[1];
-    ratio      = params[2];
-    makeupGain   = params[3];
-}
-
-void CompressorPedal::getParams(float* params) const {
-    params[0] = volume;   
-    params[1] = threshold;   
-    params[2] = ratio;  
-    params[3] = makeupGain;  
-}
-
-
 void Pedal::process(float* input, float* output, uint16_t length)
 {
     memcpy(output, input, length * sizeof(float));
-    for (uint16_t i = 0; i < length; i++)
-    {
-        output[i] *= volume;
-    }
 }
 
 void DistortionPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyOverdrive(input, output, length, gain, tone, level);
+    DSP::applyOverdrive(input, output, length, 
+                        params.gain, params.tone, params.level);
     
     for (uint16_t i = 0; i < length; i++)
     {
-        output[i] *= volume;
+        output[i] *= params.volume;
     }
 }
 
 void EchoPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyEcho(input, output, length, delayTime, feedback, mix);
+    DSP::applyEcho(input, output, length, 
+                   params.delayTime, params.feedback, params.mix);
     
     for (uint16_t i = 0; i < length; i++)
     {
-        output[i] *= volume;
+        output[i] *= params.volume;
     }
 }
 
 void ReverbPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyReverb(input, output, length, depth, rate, mix);
+    DSP::applyReverb(input, output, length, 
+                     params.roomSize, params.damping, params.mix);
     
     for (uint16_t i = 0; i < length; i++)
     {
-        output[i] *= volume;
+        output[i] *= params.volume;
     }
 }
 
 void NoiseGatePedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyNoiseGate(input, output, length, threshold, hold, release);
+    DSP::applyNoiseGate(input, output, length, 
+                        params.threshold, params.attack, params.hold, params.release);
+    
     for (uint16_t i = 0; i < length; i++)
     {
-        output[i] *= volume;
+        output[i] *= params.volume;
     }
 }
 
 void CompressorPedal::process(float* input, float* output, uint16_t length)
 {
-    DSP::applyCompressor(input, output, length, threshold, ratio, makeupGain);
+    DSP::applyCompressor(input, output, length, 
+                         params.threshold, params.ratio, params.makeupGain, params.attack, params.release);
+    
     for (uint16_t i = 0; i < length; i++)
     {
-        output[i] *= volume;
+        output[i] *= params.volume;
     }
 }
 
 void PassThroughPedal::process(float* input, float* output, uint16_t length)
 {
     memcpy(output, input, length * sizeof(float));
+    
     for (uint16_t i = 0; i < length; i++)
     {
-        output[i] *= volume;
+        output[i] *= params.volume;
     }
 }

@@ -1,6 +1,6 @@
 #include "effectsChain.hpp"
 #include "display.hpp"
-#include <array>
+#include <vector>
 
 EffectsChain::EffectsChain() {
     pedals[0] = Pedal::createPedal(PedalType::PASS_THROUGH);
@@ -44,8 +44,13 @@ void EffectsChain::draw() const {
 
 void EffectsChain::process(uint16_t* input, uint16_t* output, uint16_t startIdx, uint16_t length)
 {
-    static std::array<float, 1024> buffer_a;
-    static std::array<float, 1024> buffer_b;
+    static std::vector<float> buffer_a;
+    static std::vector<float> buffer_b;
+    
+    if (buffer_a.size() < length) {
+        buffer_a.resize(length);
+        buffer_b.resize(length);
+    }
     
     for (uint16_t i = 0; i < length; ++i)
     {
@@ -61,29 +66,20 @@ void EffectsChain::process(uint16_t* input, uint16_t* output, uint16_t startIdx,
         {
             pedals[i]->process(in_buf, out_buf, length);
             
-            float* temp = in_buf;
-            in_buf = out_buf;
-            out_buf = temp;
+            std::swap(in_buf, out_buf);
         }
-        else
+        else if (in_buf != out_buf)
         {
-            if (in_buf != out_buf)
-            {
-                memcpy(out_buf, in_buf, length * sizeof(float));
-                float* temp = in_buf;
-                in_buf = out_buf;
-                out_buf = temp;
-            }
+            memcpy(out_buf, in_buf, length * sizeof(float));
+            std::swap(in_buf, out_buf);
         }
     }
     
     for (uint16_t i = 0; i < length; ++i)
     {
         const float sample = clamp(in_buf[i], -1.0f, 1.0f);
-        const int32_t value = clamp(
-            static_cast<int32_t>(sample * 2048.0f) + 2048,
-            0, 4095
+        output[startIdx + i] = static_cast<uint16_t>(
+            clamp(static_cast<int32_t>(sample * 2048.0f) + 2048, 0, 4095)
         );
-        output[startIdx + i] = static_cast<uint16_t>(value);
     }
 }

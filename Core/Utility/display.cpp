@@ -151,23 +151,30 @@ void clear(void) {
 void init() {
     reset();
 
-    writeCommand(0xAE); 					// Display OFF
+    writeCommand(0xAE);                     // Display OFF
     writeCommand(0xD5); writeCommand(0x80); // Clock div
     writeCommand(0xA8); writeCommand(0x3F); // Mux ratio 64
     writeCommand(0xD3); writeCommand(0x00); // Offset
-    writeCommand(0x40); 					// Start line 0
-    writeCommand(0x8D); writeCommand(0x14); // Charge pump ON (0x14 = enabled, not 0x04)
+    writeCommand(0x40);                     // Start line 0
+    writeCommand(0x8D); writeCommand(0x14); // Charge pump ON
+    
+    writeCommand(0xD5); writeCommand(0x50); // Slower clock (0x50 instead of 0x80)
+    
     writeCommand(0x20); writeCommand(0x00); // Horizontal addressing mode
-    writeCommand(0xA1); 					// Segment remap
-    writeCommand(0xC8); 					// COM scan direction remapped
+    writeCommand(0xA1);                     // Segment remap
+    writeCommand(0xC8);                     // COM scan direction remapped
     writeCommand(0xDA); writeCommand(0x12); // COM pins
-    writeCommand(0x81); writeCommand(0x40); // Contrast (increased from 0x01 to 0x20 for visibility)
-    writeCommand(0xD9); writeCommand(0x13); // Precharge
-    writeCommand(0xDB); writeCommand(0x40); // VCOM deselect level (lower voltage)
-    writeCommand(0xA4); 					// Resume RAM content display
-    writeCommand(0xA6); 					// Normal display
-    writeCommand(0x2E); 					// Deactivate scroll
-    writeCommand(0xAF); 					// Display ON
+    
+    writeCommand(0x81); writeCommand(0x01); // Contrast - 0x00 to 0xFF
+                                            // 0x01 is very dim, reduces current draw
+    
+    writeCommand(0xD9); writeCommand(0x11); // Precharge - Lower value reduces noise
+    writeCommand(0xDB); writeCommand(0x20); // VCOM deselect - Lower voltage reduces switching
+    
+    writeCommand(0xA4);                     // Resume RAM content display
+    writeCommand(0xA6);                     // Normal display
+    writeCommand(0x2E);                     // Deactivate scroll
+    writeCommand(0xAF);                     // Display ON
 }
 
 

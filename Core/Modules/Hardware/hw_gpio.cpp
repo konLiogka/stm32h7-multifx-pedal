@@ -14,10 +14,10 @@ namespace Hardware
        * PA2 POT 2 
        * PA3 POT 3 
        * PA4 DAC OUT
-       * PE4 PEDAL BUTTON 1 
+       * PE4  PEDAL BUTTON 1 
        * PC13 PEDAL BUTTON 3 
-       * PE6 PEDAL BUTTON 2 
-       * PE5 PEDAL BUTTON 4 
+       * PE6  PEDAL BUTTON 2 
+       * PE5  PEDAL BUTTON 4 
        * PA10 PEDAL 1 
        * PD14 PEDAL 0 
        *
@@ -28,8 +28,8 @@ namespace Hardware
        * PC1 ADC IN
        * PA0 SETTINGS BUTTON 
        *
-       * PD6 DISPLAY SPI SDA 
-       * PD5 DISPLAY SPI SCK 
+       * PA7 DISPLAY SPI SDA 
+       * PA5 DISPLAY SPI SCK 
        * PD2 DISPLAY SPI CS
        * PD3 DISPLAY SPI RST
        * PD4 DISPLAY SPI DC
@@ -42,7 +42,6 @@ namespace Hardware
       */
       GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-      // Enable GPIO clocks
       __HAL_RCC_GPIOA_CLK_ENABLE();
       __HAL_RCC_GPIOB_CLK_ENABLE();
       __HAL_RCC_GPIOD_CLK_ENABLE();
@@ -128,7 +127,7 @@ namespace Hardware
       GPIO_InitStruct.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-      GPIO_InitStruct.Pin   = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4;
+      GPIO_InitStruct.Pin   = GPIO_PIN_0 | GPIO_PIN_3 | GPIO_PIN_4;
       GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
       GPIO_InitStruct.Pull  = GPIO_NOPULL;
       GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;

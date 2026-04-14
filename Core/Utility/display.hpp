@@ -12,7 +12,7 @@ For SSD1309 OLED 128x64 display
 #define INC_DISPLAY_HPP_
 
 #define OLED_CS_Port    GPIOD
-#define OLED_CS_Pin     GPIO_PIN_2
+#define OLED_CS_Pin     GPIO_PIN_0
 #define OLED_DC_Port    GPIOD
 #define OLED_DC_Pin     GPIO_PIN_4
 #define OLED_RST_Port   GPIOD

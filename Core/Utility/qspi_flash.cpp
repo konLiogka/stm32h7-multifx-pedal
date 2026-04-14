@@ -253,7 +253,7 @@ namespace QSPIFlash {
             Pedal* pedal = chain->getPedal(i);
             if (pedal) {
                 float* params = reinterpret_cast<float*>(p + 1);
-                pedal->setParams(params);
+                pedal->set(params);
             }
         }
         return HAL_OK;
@@ -271,7 +271,7 @@ namespace QSPIFlash {
             pedalData[i * PEDAL_LEN] = static_cast<uint8_t>(type);
             if (pedal) {
                 float* params = reinterpret_cast<float*>(&pedalData[i * PEDAL_LEN + 1]);
-                pedal->getParams(params);
+                pedal->get(params);
             }
         }
 

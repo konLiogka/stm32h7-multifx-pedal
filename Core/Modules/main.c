@@ -10,7 +10,6 @@ int main(void)
 
   Hardware::init();
 
-  Display::init();
   Display::clear();
   startupAnimation();
 

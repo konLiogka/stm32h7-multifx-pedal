@@ -11,14 +11,14 @@
 #include "qspi_flash.hpp"
 #include <cstdio>
 
-#define SEL_VIEW_B GPIO_PIN_0
+#define SEL_VIEW_B      GPIO_PIN_0
 #define SETTINGS_VIEW_B GPIO_PIN_7
 #define SELECT_PEDAL_0 GPIO_PIN_4
 #define SELECT_PEDAL_1 GPIO_PIN_6
 #define SELECT_PEDAL_2 GPIO_PIN_13
 #define SELECT_PEDAL_3 GPIO_PIN_5
-#define PEDAL_0 GPIO_PIN_14
-#define PEDAL_1 GPIO_PIN_10
+#define PEDAL_0        GPIO_PIN_14
+#define PEDAL_1        GPIO_PIN_10
 
 constexpr uint16_t BUFFER_SIZE = 2048;
 constexpr uint16_t HALF_BUFFER_SIZE = (BUFFER_SIZE / 2);
@@ -47,7 +47,8 @@ enum class displayView
 displayView currentView = displayView::PEDALCHAIN_VIEW;
 
 static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
-    {.Channel = ADC_CHANNEL_10,
+
+    {.Channel = ADC_CHANNEL_15,
      .Rank = ADC_REGULAR_RANK_1,
      .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
      .SingleDiff = ADC_SINGLE_ENDED,
@@ -59,12 +60,13 @@ static ADC_ChannelConfTypeDef adcChannelConfigs[3] = {
      .SingleDiff = ADC_SINGLE_ENDED,
      .OffsetNumber = ADC_OFFSET_NONE,
      .Offset = 0},
-    {.Channel = ADC_CHANNEL_15,
+    {.Channel = ADC_CHANNEL_10,
      .Rank = ADC_REGULAR_RANK_1,
      .SamplingTime = ADC_SAMPLETIME_810CYCLES_5,
      .SingleDiff = ADC_SINGLE_ENDED,
      .OffsetNumber = ADC_OFFSET_NONE,
-     .Offset = 0}};
+     .Offset = 0},
+};
 
 void updateSelectedPedal(uint8_t index)
 {
@@ -345,7 +347,7 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
             if (HAL_ADC_PollForConversion(&hadc2, 5) == HAL_OK)
             {
-                uint32_t rawValue = 255 - HAL_ADC_GetValue(&hadc2);
+                uint32_t rawValue = HAL_ADC_GetValue(&hadc2);
                 uint32_t normalized_value = ((rawValue * 100 + 127) / 255 + 2) / 5 * 5;
                 normalized_value = clamp(normalized_value, 0, 100);
                 
@@ -369,7 +371,7 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             uint8_t endIndex = (numParams < index + 3) ? numParams : index + 3;
 
             float *params = new float[numParams];
-            selectedPedal->getParams(params);
+            selectedPedal->get(params);
 
             for (int i = index; i < endIndex; i++)
             {
@@ -379,7 +381,7 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     params[i] = potValues[potIndex] * 0.01f;
                 }
             }
-            selectedPedal->setParams(params);
+            selectedPedal->set(params);
             delete[] params;
 
             displayPedalSettings(selectedPedal, page);

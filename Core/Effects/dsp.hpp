@@ -38,10 +38,10 @@ namespace DSP
                     float roomSize, float damping, float mix);
 
     DSP_API void applyNoiseGate(float* input,float* output, uint16_t length,
-                    float threshold, float hold, float release);
+                    float threshold, float attack, float hold, float release);
                     
     DSP_API void applyCompressor(float *input, float *output, uint16_t length,
-                         float threshold, float ratio, float makeupGain);
+                         float threshold, float ratio, float makeupGain, float attack, float release);
     #ifdef __cplusplus
     }
     #endif
