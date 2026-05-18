@@ -158,7 +158,7 @@ void init() {
     writeCommand(0x40);                     // Start line 0
     writeCommand(0x8D); writeCommand(0x14); // Charge pump ON
     
-    writeCommand(0xD5); writeCommand(0x50); // Slower clock (0x50 instead of 0x80)
+    writeCommand(0xD5); writeCommand(0x50); // Slower clock
     
     writeCommand(0x20); writeCommand(0x00); // Horizontal addressing mode
     writeCommand(0xA1);                     // Segment remap
@@ -166,10 +166,9 @@ void init() {
     writeCommand(0xDA); writeCommand(0x12); // COM pins
     
     writeCommand(0x81); writeCommand(0x01); // Contrast - 0x00 to 0xFF
-                                            // 0x01 is very dim, reduces current draw
     
-    writeCommand(0xD9); writeCommand(0x11); // Precharge - Lower value reduces noise
-    writeCommand(0xDB); writeCommand(0x20); // VCOM deselect - Lower voltage reduces switching
+    writeCommand(0xD9); writeCommand(0x11); // Precharge 
+    writeCommand(0xDB); writeCommand(0x20); // VCOM deselect 
     
     writeCommand(0xA4);                     // Resume RAM content display
     writeCommand(0xA6);                     // Normal display
@@ -178,10 +177,14 @@ void init() {
 }
 
 
-void setBrightness(uint8_t level)
-{
+void setBrightness(uint8_t level) {
     writeCommand(0x81);   
-    writeCommand(level); 
+    switch (level) {
+        case 0:  writeCommand(0x02); break;  
+        case 1:  writeCommand(0x24); break;   
+        case 2:  writeCommand(0x4F); break;   
+        default: writeCommand(0x07); break;
+    }
 }
 
 void writeData(uint8_t* data, uint16_t size) {

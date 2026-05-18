@@ -35,6 +35,9 @@ volatile uint32_t potValues[3];
 uint8_t potTouchedFlags = 0; // one hot encoded : bit 0 = pot0, bit 1 = pot1, bit 2 = pot2
 Pedal *selectedPedal = Pedal::createPedal(PedalType::PASS_THROUGH);
 uint8_t page = 0;
+bool swapMode = false;
+int8_t swapFirstPedal = -1;
+uint8_t brightnessLevel = 1;
 
 enum class displayView
 {
@@ -174,6 +177,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         switch (GPIO_Pin)
         {
         case SEL_VIEW_B:
+            swapMode = false;
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
@@ -234,37 +238,80 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             break;
 
         case SELECT_PEDAL_0:
-
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
-                if (chain.selectedPedal == 0)
+                if (swapMode)
                 {
-                    togglePedal(0, selectedPedal);
+                    if (swapFirstPedal == -1)
+                    {
+                        swapFirstPedal = 0;
+                        Display::drawString("Swap: pick 2nd", 0, 0);
+                    }
+                    else
+                    {
+                        chain.swapPedals(swapFirstPedal, 0);
+                        swapMode = false;
+                        swapFirstPedal = -1;
+                        Display::drawBitmap(base_chain_bitmap, 0, 0);
+                        chain.draw();
+                        updateSelectedPedal(chain.selectedPedal);
+                    }
                 }
                 else
                 {
-                    updateSelectedPedal(0);
+                    if (chain.selectedPedal == 0)
+                        togglePedal(0, selectedPedal);
+                    else
+                        updateSelectedPedal(0);
                 }
+                break;
+
+            case displayView::SETTINGS_VIEW:
+                swapMode = true;
+                swapFirstPedal = -1;
+                Display::drawBitmap(base_chain_bitmap, 0, 0);
+                chain.draw();
+                updateSelectedPedal(chain.selectedPedal);
+                Display::drawString("Swap: pick 1st", 0, 0);
+                currentView = displayView::PEDALCHAIN_VIEW;
+                break;
+
+            default:
                 break;
             }
             break;
-
+           
         case SELECT_PEDAL_1:
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
-            {
-                if (chain.selectedPedal == 1)
+                if (swapMode)
                 {
-                    togglePedal(1, selectedPedal);
+                    if (swapFirstPedal == -1)
+                    {
+                        swapFirstPedal = 1;
+                        Display::drawString("Swap: pick 2nd", 0, 0);
+                        updateSelectedPedal(chain.selectedPedal);
+                    }
+                    else
+                    {
+                        chain.swapPedals(swapFirstPedal, 1);
+                        swapMode = false;
+                        swapFirstPedal = -1;
+                        Display::drawBitmap(base_chain_bitmap, 0, 0);
+                        chain.draw();
+                        updateSelectedPedal(chain.selectedPedal);
+                    }
                 }
                 else
                 {
-                    updateSelectedPedal(1);
+                    if (chain.selectedPedal == 1)
+                        togglePedal(1, selectedPedal);
+                    else
+                        updateSelectedPedal(1);
                 }
                 break;
-            }
             case displayView::SETTINGS_VIEW:
                 {
                     HAL_ADC_Stop_DMA(&hadc1);
@@ -282,6 +329,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                     {
                         Display::printf("QSPI save %d", err_code);
                     }
+                    Display::printf(80, 0, "Saved!");
 
                     HAL_ADC_Start_DMA(&hadc1, reinterpret_cast<uint32_t *>(adc_buf), BUFFER_SIZE);
                     HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, reinterpret_cast<uint32_t *>(dac_buf), 
@@ -297,16 +345,37 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             {
                 case displayView::PEDALCHAIN_VIEW:
                 {
-                    if (chain.selectedPedal == 2)
+                    if (swapMode)
                     {
-                        togglePedal(2, selectedPedal);
+                        if (swapFirstPedal == -1)
+                        {
+                            swapFirstPedal = 2;
+                            Display::drawString("Swap: pick 2nd", 0, 0);
+                        }
+                        else
+                        {
+                            chain.swapPedals(swapFirstPedal, 2);
+                            swapMode = false;
+                            swapFirstPedal = -1;
+                            Display::drawBitmap(base_chain_bitmap, 0, 0);
+                            chain.draw();
+                            updateSelectedPedal(chain.selectedPedal);
+                        }
                     }
                     else
                     {
-                        updateSelectedPedal(2);
+                        if (chain.selectedPedal == 2)
+                            togglePedal(2, selectedPedal);
+                        else
+                            updateSelectedPedal(2);
                     }
                     break;
-                }
+                            }
+                case displayView::SETTINGS_VIEW:
+                    brightnessLevel = (brightnessLevel + 1) % 3;
+                    Display::setBrightness(brightnessLevel);
+                    break;             
+                            
                 }
             break;
 
@@ -314,13 +383,29 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             switch (currentView)
             {
             case displayView::PEDALCHAIN_VIEW:
-                if (chain.selectedPedal == 3)
+                if (swapMode)
                 {
-                    togglePedal(3, selectedPedal);
+                    if (swapFirstPedal == -1)
+                    {
+                        swapFirstPedal = 3;
+                        Display::drawString("Swap: pick 2nd", 0, 0);
+                    }
+                    else
+                    {
+                        chain.swapPedals(swapFirstPedal, 3);
+                        swapMode = false;
+                        swapFirstPedal = -1;
+                        Display::drawBitmap(base_chain_bitmap, 0, 0);
+                        chain.draw();
+                        updateSelectedPedal(chain.selectedPedal);
+                    }
                 }
                 else
                 {
-                    updateSelectedPedal(3);
+                    if (chain.selectedPedal == 3)
+                        togglePedal(3, selectedPedal);
+                    else
+                        updateSelectedPedal(3);
                 }
                 break;
             }

@@ -17,6 +17,7 @@ public:
     void draw() const;
     void clear();
     void process(uint16_t* input, uint16_t* output, uint16_t startIdx, uint16_t length);
+    void swapPedals(uint8_t a, uint8_t b);
 
 private:
     Pedal* pedals[4];
