@@ -180,9 +180,10 @@ void init() {
 void setBrightness(uint8_t level) {
     writeCommand(0x81);   
     switch (level) {
-        case 0:  writeCommand(0x02); break;  
-        case 1:  writeCommand(0x24); break;   
-        case 2:  writeCommand(0x4F); break;   
+        case 0:  writeCommand(0x01); break;  
+        case 1:  writeCommand(0x03); break;  
+        case 2:  writeCommand(0x24); break;   
+        case 3:  writeCommand(0x4F); break;   
         default: writeCommand(0x07); break;
     }
 }
