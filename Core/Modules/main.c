@@ -13,7 +13,7 @@ int main(void)
   Display::clear();
   startupAnimation();
 
-  HAL_Delay(200);
+  HAL_Delay(1000);
 
   mainApp();
 
