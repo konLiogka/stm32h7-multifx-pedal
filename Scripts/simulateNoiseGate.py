@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""
-simulateNoiseGate.py
---------------------
-Thin driver for the noise gate effect.
-All matplotlib logic lives in plotAnalysis.py.
-"""
+
 
 import numpy as np
+import argparse
 from ctypes import c_float, POINTER
 import dsp_bindings as dsp
 
@@ -80,9 +76,37 @@ class NoiseGateEffect:
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Simulate noise gate effect on WAV file')
+    parser.add_argument('--wav', type=str, help='Path to input WAV file')
+    parser.add_argument('--threshold', type=float, default=0.3, help='Threshold parameter (0-1)')
+    parser.add_argument('--attack', type=float, default=0.1, help='Attack parameter (0-1)')
+    parser.add_argument('--hold', type=float, default=0.5, help='Hold parameter (0-1)')
+    parser.add_argument('--release', type=float, default=0.1, help='Release parameter (0-1)')
+    parser.add_argument('--duration', type=float, default=None, help='Duration in seconds to analyze (default: entire file)')
+    parser.add_argument('--save', action='store_true', help='Save processed output to WAV file')
+    parser.add_argument('--output', type=str, default='noisegate_output.wav', help='Path to save processed output WAV file')
+    
+    args = parser.parse_args()
+    
     effect = NoiseGateEffect()
+    effect.set_params(
+        threshold=args.threshold,
+        attack=args.attack,
+        hold=args.hold,
+        release=args.release
+    )
     effect.reset()
-    analyzer = NoiseGateAnalyzer(effect)
+    
+    # Create analyzer with WAV file support
+    analyzer = NoiseGateAnalyzer(effect, wav_file=args.wav, duration=args.duration)
+    
+    if args.save and args.wav:
+        # Save the processed audio
+        from plotanalysis import save_processed_audio
+        save_processed_audio(analyzer.input_signal, analyzer.output_signal, 
+                            analyzer.fs, args.output)
+        print(f"Saved processed audio to: {args.output}")
+    
     analyzer.run()
 
 

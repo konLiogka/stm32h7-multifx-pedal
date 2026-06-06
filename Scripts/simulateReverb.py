@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-"""
-simulateReverb.py
------------------
-Thin driver for the reverb effect.
-All matplotlib logic lives in plotAnalysis.py.
-"""
 
 import numpy as np
+import argparse
 from ctypes import c_float, POINTER
 import dsp_bindings as dsp
 
@@ -54,8 +49,34 @@ class ReverbEffect:
 
 
 def main():
-    effect   = ReverbEffect()
-    analyzer = ReverbAnalyzer(effect)
+    parser = argparse.ArgumentParser(description='Simulate reverb effect on WAV file')
+    parser.add_argument('--wav', type=str, help='Path to input WAV file')
+    parser.add_argument('--roomSize', type=float, default=0.5, help='Room size parameter (0-1)')
+    parser.add_argument('--damping', type=float, default=0.5, help='Damping parameter (0-1)')
+    parser.add_argument('--mix', type=float, default=0.3, help='Mix parameter (0-1)')
+    parser.add_argument('--duration', type=float, default=None, help='Duration in seconds to analyze (default: entire file)')
+    parser.add_argument('--save', action='store_true', help='Save processed output to WAV file')
+    parser.add_argument('--output', type=str, default='reverb_output.wav', help='Path to save processed output WAV file')
+    
+    args = parser.parse_args()
+    
+    effect = ReverbEffect()
+    effect.set_params(
+        roomSize=args.roomSize,
+        damping=args.damping,
+        mix=args.mix
+    )
+    
+    # Create analyzer with WAV file support
+    analyzer = ReverbAnalyzer(effect, wav_file=args.wav, duration=args.duration)
+    
+    if args.save and args.wav:
+        # Save the processed audio
+        from plotanalysis import save_processed_audio
+        save_processed_audio(analyzer.input_signal, analyzer.output_signal, 
+                            analyzer.fs, args.output)
+        print(f"Saved processed audio to: {args.output}")
+    
     analyzer.run()
 
 

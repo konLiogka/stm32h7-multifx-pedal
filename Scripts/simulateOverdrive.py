@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""
-simulateOverdrive.py
---------------------
-Thin driver for the overdrive/distortion effect.
-All matplotlib logic lives in plotAnalysis.py.
-"""
+
 
 import numpy as np
+import argparse
 from ctypes import c_float, POINTER
 import dsp_bindings as dsp
 
@@ -42,10 +38,20 @@ class OverdriveEffect:
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Simulate overdrive effect on WAV file')
+    parser.add_argument('--wav', type=str, help='Path to input WAV file')
+    parser.add_argument('--gain', type=float, default=0.3, help='Gain parameter (0-1)')
+    parser.add_argument('--tone', type=float, default=0.1, help='Tone parameter (0-1)')
+    parser.add_argument('--level', type=float, default=0.3, help='Level parameter (0-1)')
+    parser.add_argument('--duration', type=float, default=None, help='Duration in seconds to analyze (default: entire file)')
+    
+    args = parser.parse_args()
+    
     effect = OverdriveEffect()
-    effect.set_params(gain=0.3, tone=0.1, level=0.3)
-
-    analyzer = OverdriveAnalyzer(effect)
+    effect.set_params(gain=args.gain, tone=args.tone, level=args.level)
+    
+    # Create analyzer with WAV file support
+    analyzer = OverdriveAnalyzer(effect, wav_file=args.wav, duration=args.duration)
     analyzer.run()
 
 
